@@ -1,8 +1,15 @@
+import ChessBoard from './components/ChessBoard/ChessBoard';
+
 function App() {
   return (
-    <div>
-      <h1>Chess Arena</h1>
-      <p>Modern chess application</p>
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: '100vh',
+      backgroundColor: '#1a1a1a'
+    }}>
+      <ChessBoard />
     </div>
   );
 }
