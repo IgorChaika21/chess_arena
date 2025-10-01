@@ -1,6 +1,7 @@
 import React from 'react';
 
-import type { Board } from '@/types/types'
+import type { Board } from '@/types/types';
+
 import {
   ChessBoardContainer,
   ColumnLabels,

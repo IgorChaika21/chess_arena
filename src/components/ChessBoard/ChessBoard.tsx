@@ -1,29 +1,43 @@
 import React, { useState } from 'react';
 
-import ChessGrid from './ChessGrid/ChessGrid';
 import { Colors } from '@/types/types';
 import type { Board } from '@/types/types';
 
+import ChessGrid from './ChessGrid/ChessGrid';
+
 const createInitialBoard = (): Board => {
-  const board = Array(8).fill(null).map(() => Array(8).fill(null));
-  
+  const board = Array(8)
+    .fill(null)
+    .map(() => Array(8).fill(null));
+
   for (let i = 0; i < 8; i++) {
     board[1][i] = { type: 'pawn', color: Colors.BLACK };
     board[6][i] = { type: 'pawn', color: Colors.WHITE };
   }
-  
-  const pieces = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+
+  const pieces = [
+    'rook',
+    'knight',
+    'bishop',
+    'queen',
+    'king',
+    'bishop',
+    'knight',
+    'rook',
+  ];
   pieces.forEach((piece, i) => {
     board[0][i] = { type: piece, color: Colors.BLACK };
     board[7][i] = { type: piece, color: Colors.WHITE };
   });
-  
+
   return board;
 };
 
 const ChessBoard: React.FC = () => {
   const [board, setBoard] = useState(createInitialBoard());
-  const [selectedSquare, setSelectedSquare] = useState<[number, number] | null>(null);
+  const [selectedSquare, setSelectedSquare] = useState<[number, number] | null>(
+    null
+  );
   const [currentPlayer, setCurrentPlayer] = useState<Colors>(Colors.WHITE);
 
   const handleSquareClick = (row: number, col: number) => {
@@ -57,7 +71,9 @@ const ChessBoard: React.FC = () => {
         newBoard[selectedRow][selectedCol] = null;
         setBoard(newBoard);
         setSelectedSquare(null);
-        setCurrentPlayer(currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE);
+        setCurrentPlayer(
+          currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE
+        );
       }
     }
   };

@@ -1,7 +1,9 @@
 import React from 'react';
 
-import ChessPiece from '../ChessPiece/ChessPiece';
 import type { ChessPiece as ChessPieceType } from '@/types/types';
+
+import ChessPiece from '../ChessPiece/ChessPiece';
+
 import { SquareContainer } from './Square.styles';
 
 interface SquareProps {

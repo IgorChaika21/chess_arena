@@ -1,8 +1,8 @@
 import React from 'react';
 
 import { Colors, FigureNames } from '@/types/types';
-import { ChessPieceImage } from './ChessPiece.styles';
 
+import { ChessPieceImage } from './ChessPiece.styles';
 
 interface ChessPieceProps {
   type: FigureNames;

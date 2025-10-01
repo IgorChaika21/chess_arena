@@ -5,7 +5,7 @@ export const lightTheme = {
 };
 
 export const darkTheme = {
-  bgColor: '#1a1a1a', 
+  bgColor: '#1a1a1a',
   textColor: '#f0f0f0',
   borderColor: '#444',
 };
