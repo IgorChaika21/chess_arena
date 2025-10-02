@@ -12,10 +12,11 @@ export const SquareContainer = styled.div<{
   cursor: pointer;
   background-color: ${props =>
     props.$isSelected
-      ? 'rgba(255, 255, 0, 0.7)'
+      ? props.theme.chessSelected
       : props.$isDark
-        ? '#b58863'
-        : '#f0d9b5'};
+        ? props.theme.chessDarkSquare
+        : props.theme.chessLightSquare};
+  transition: background-color 0.2s ease;
 
   &::after {
     content: '';

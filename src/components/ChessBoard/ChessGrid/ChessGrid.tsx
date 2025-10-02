@@ -1,6 +1,10 @@
 import React from 'react';
 
+import { columnLabels, rowLabels } from '@/constants/constants';
+import { useGameStore } from '@/store/useGameStore';
 import type { Board } from '@/types/types';
+
+import Square from '../Square/Square';
 
 import {
   ChessBoardContainer,
@@ -17,34 +21,22 @@ interface ChessGridProps {
 }
 
 const ChessGrid: React.FC<ChessGridProps> = ({ board, onSquareClick }) => {
-  const columnLabels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-  const rowLabels = ['8', '7', '6', '5', '4', '3', '2', '1'];
+  const { selectedSquare } = useGameStore();
 
   const renderSquare = (rowIndex: number, colIndex: number) => {
     const isDark = (rowIndex + colIndex) % 2 === 1;
     const piece = board[rowIndex]?.[colIndex];
+    const isSelected =
+      selectedSquare?.[0] === rowIndex && selectedSquare?.[1] === colIndex;
 
     return (
-      <div
+      <Square
         key={`${rowIndex}-${colIndex}`}
-        style={{
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: isDark ? '#b58863' : '#f0d9b5',
-          cursor: 'pointer',
-        }}
+        isDark={isDark}
+        isSelected={isSelected}
+        piece={piece}
         onClick={() => onSquareClick?.(rowIndex, colIndex)}
-      >
-        {piece && (
-          <img
-            src={`/chess-pieces/${piece.color}-${piece.type}.svg`}
-            alt={`${piece.color} ${piece.type}`}
-            style={{ width: '35px', height: '35px' }}
-          />
-        )}
-      </div>
+      />
     );
   };
 

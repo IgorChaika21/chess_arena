@@ -1,18 +1,28 @@
-import ChessBoard from './components/ChessBoard/ChessBoard';
+import { ThemeProvider } from 'styled-components';
+
+import ChessBoard from '@/components/ChessBoard/ChessBoard';
+import ThemeSwitcher from '@/components/ThemeSwitcher/ThemeSwitcher';
+import { useTheme } from '@/hooks/useTheme';
+import { GlobalStyles } from '@/styles/GlobalStyles';
 
 function App() {
+  const { currentTheme } = useTheme();
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#1a1a1a',
-      }}
-    >
-      <ChessBoard />
-    </div>
+    <ThemeProvider theme={currentTheme}>
+      <GlobalStyles />
+      <ThemeSwitcher />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <ChessBoard />
+      </div>
+    </ThemeProvider>
   );
 }
 

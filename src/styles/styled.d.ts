@@ -5,5 +5,8 @@ declare module 'styled-components' {
     bgColor: string;
     textColor: string;
     borderColor: string;
+    chessLightSquare: string;
+    chessDarkSquare: string;
+    chessSelected: string;
   }
 }

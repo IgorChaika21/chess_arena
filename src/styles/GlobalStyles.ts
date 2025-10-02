@@ -8,11 +8,12 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    background-color: #1a1a1a;
+    background-color: ${props => props.theme.bgColor};
     margin: 0;
     font-family: "Marcellus", serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease;
   }
 
   #root {
@@ -20,7 +21,7 @@ export const GlobalStyles = createGlobalStyle`
     min-height: 100vh;
     box-sizing: border-box;
     overflow-x: hidden;
-    color: #f0f0f0;
+    color: ${props => props.theme.textColor};
     font-family: "Marcellus", serif;
   }
 
