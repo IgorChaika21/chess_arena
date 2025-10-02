@@ -18,4 +18,6 @@ export interface ChessPiece {
   hasMoved?: boolean;
 }
 
+export type BoardPosition = [number, number];
+
 export type Board = (ChessPiece | null)[][];
