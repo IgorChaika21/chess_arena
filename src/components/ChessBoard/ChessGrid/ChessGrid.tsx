@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { columnLabels, rowLabels } from '@/constants/constants';
 import { useGameStore } from '@/store/useGameStore';
 import type { Board } from '@/types/types';
+import { isValidMove } from '@/utils/moveValidation';
 
 import Square from '../Square/Square';
 
@@ -21,19 +22,53 @@ interface ChessGridProps {
 }
 
 const ChessGrid: React.FC<ChessGridProps> = ({ board, onSquareClick }) => {
-  const { selectedSquare } = useGameStore();
+  const { selectedSquare, currentPlayer } = useGameStore();
+
+  const possibleMoves = useMemo(() => {
+    if (!selectedSquare) return [];
+
+    const [selectedRow, selectedCol] = selectedSquare;
+    const piece = board[selectedRow][selectedCol];
+
+    if (!piece || piece.color !== currentPlayer) return [];
+
+    const moves: [number, number][] = [];
+
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        if (row === selectedRow && col === selectedCol) continue;
+
+        if (
+          isValidMove(
+            board,
+            [selectedRow, selectedCol],
+            [row, col],
+            currentPlayer
+          )
+        ) {
+          moves.push([row, col]);
+        }
+      }
+    }
+
+    return moves;
+  }, [board, selectedSquare, currentPlayer]);
 
   const renderSquare = (rowIndex: number, colIndex: number) => {
     const isDark = (rowIndex + colIndex) % 2 === 1;
     const piece = board[rowIndex]?.[colIndex];
     const isSelected =
       selectedSquare?.[0] === rowIndex && selectedSquare?.[1] === colIndex;
+    const isMoveOption = possibleMoves.some(
+      ([r, c]) => r === rowIndex && c === colIndex
+    );
 
     return (
       <Square
         key={`${rowIndex}-${colIndex}`}
         isDark={isDark}
         isSelected={isSelected}
+        isMoveOption={isMoveOption}
         piece={piece}
         onClick={() => onSquareClick?.(rowIndex, colIndex)}
       />

@@ -2,6 +2,7 @@ import React from 'react';
 
 import { useGameStore } from '@/store/useGameStore';
 import { Colors } from '@/types/types';
+import { isValidMove } from '@/utils/moveValidation';
 
 import ChessGrid from './ChessGrid/ChessGrid';
 
@@ -36,19 +37,28 @@ const ChessBoard: React.FC = () => {
         return;
       }
 
-      const newBoard = [...board.map(row => [...row])];
-      const selectedPiece = newBoard[selectedRow][selectedCol];
+      const isValid = isValidMove(
+        board,
+        [selectedRow, selectedCol],
+        [row, col],
+        currentPlayer
+      );
 
-      const isValidMove = true; // Replace with actual move validation logic
+      if (isValid) {
+        const newBoard = [...board.map(row => [...row])];
+        const selectedPiece = newBoard[selectedRow][selectedCol];
 
-      if (isValidMove && selectedPiece) {
-        newBoard[row][col] = selectedPiece;
-        newBoard[selectedRow][selectedCol] = null;
-        setBoard(newBoard);
+        if (selectedPiece) {
+          newBoard[row][col] = selectedPiece;
+          newBoard[selectedRow][selectedCol] = null;
+          setBoard(newBoard);
+          setSelectedSquare(null);
+          setCurrentPlayer(
+            currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE
+          );
+        }
+      } else {
         setSelectedSquare(null);
-        setCurrentPlayer(
-          currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE
-        );
       }
     }
   };
