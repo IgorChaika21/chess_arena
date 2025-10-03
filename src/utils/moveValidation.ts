@@ -1,6 +1,8 @@
 import type { Board, BoardPosition } from '@/types/types';
 import { Colors, FigureNames } from '@/types/types';
 
+import { doesMovePutKingInCheck } from './gameStateHelpers';
+
 export const isValidMove = (
   board: Board,
   from: BoardPosition,
@@ -15,24 +17,31 @@ export const isValidMove = (
   if (!piece) return false;
   if (piece.color !== currentPlayer) return false;
   if (targetPiece && targetPiece.color === piece.color) return false;
-  if (fromRow === toRow && fromCol === toCol) return false;
 
   switch (piece.type) {
     case FigureNames.PAWN:
-      return isValidPawnMove(board, from, to, piece.color);
-    case FigureNames.KNIGHT:
-      return isValidKnightMove(from, to);
-    case FigureNames.BISHOP:
-      return isValidBishopMove(board, from, to);
+      if (!isValidPawnMove(board, from, to, piece.color)) return false;
+      break;
     case FigureNames.ROOK:
-      return isValidRookMove(board, from, to);
+      if (!isValidRookMove(board, from, to)) return false;
+      break;
+    case FigureNames.KNIGHT:
+      if (!isValidKnightMove(from, to)) return false;
+      break;
+    case FigureNames.BISHOP:
+      if (!isValidBishopMove(board, from, to)) return false;
+      break;
     case FigureNames.QUEEN:
-      return isValidQueenMove(board, from, to);
+      if (!isValidQueenMove(board, from, to)) return false;
+      break;
     case FigureNames.KING:
-      return isValidKingMove(from, to);
+      if (!isValidKingMove(from, to)) return false;
+      break;
     default:
       return false;
   }
+
+  return !doesMovePutKingInCheck(board, from, to, currentPlayer);
 };
 
 const isValidPawnMove = (
