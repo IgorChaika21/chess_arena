@@ -41,7 +41,11 @@ export const isValidMove = (
       return false;
   }
 
-  return !doesMovePutKingInCheck(board, from, to, currentPlayer);
+  if (doesMovePutKingInCheck(board, from, to, currentPlayer)) {
+    return false;
+  }
+
+  return true;
 };
 
 const isValidPawnMove = (

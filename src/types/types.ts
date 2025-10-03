@@ -12,6 +12,13 @@ export enum FigureNames {
   BISHOP = 'bishop',
 }
 
+export enum GameStatus {
+  IN_PROGRESS = 'in-progress',
+  CHECK = 'check',
+  CHECKMATE = 'checkmate',
+  STALEMATE = 'stalemate',
+}
+
 export interface ChessPiece {
   color: Colors;
   type: FigureNames;

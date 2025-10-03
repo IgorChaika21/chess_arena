@@ -1,7 +1,9 @@
 import React from 'react';
 
 import { useGameStore } from '@/store/useGameStore';
-import { Colors } from '@/types/types';
+import { Colors, GameStatus } from '@/types/types';
+import { isKingInCheck } from '@/utils/gameStateHelpers';
+import { isCheckmate, isStalemate } from '@/utils/gameStateRules';
 import { isValidMove } from '@/utils/moveValidation';
 
 import ChessGrid from './ChessGrid/ChessGrid';
@@ -11,12 +13,21 @@ const ChessBoard: React.FC = () => {
     board,
     currentPlayer,
     selectedSquare,
+    gameStatus,
     setBoard,
     setCurrentPlayer,
     setSelectedSquare,
+    setGameStatus,
   } = useGameStore();
 
   const handleSquareClick = (row: number, col: number) => {
+    if (
+      gameStatus === GameStatus.CHECKMATE ||
+      gameStatus === GameStatus.STALEMATE
+    ) {
+      return;
+    }
+
     const piece = board[row][col];
 
     if (!selectedSquare && piece && piece.color === currentPlayer) {
@@ -49,13 +60,27 @@ const ChessBoard: React.FC = () => {
         const selectedPiece = newBoard[selectedRow][selectedCol];
 
         if (selectedPiece) {
-          newBoard[row][col] = selectedPiece;
+          newBoard[row][col] = { ...selectedPiece, hasMoved: true };
           newBoard[selectedRow][selectedCol] = null;
+
           setBoard(newBoard);
           setSelectedSquare(null);
-          setCurrentPlayer(
-            currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE
-          );
+
+          const nextPlayer =
+            currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
+          setCurrentPlayer(nextPlayer);
+
+          let newGameStatus = GameStatus.IN_PROGRESS;
+
+          if (isCheckmate(newBoard, nextPlayer)) {
+            newGameStatus = GameStatus.CHECKMATE;
+          } else if (isStalemate(newBoard, nextPlayer)) {
+            newGameStatus = GameStatus.STALEMATE;
+          } else if (isKingInCheck(newBoard, nextPlayer)) {
+            newGameStatus = GameStatus.CHECK;
+          }
+
+          setGameStatus(newGameStatus);
         }
       } else {
         setSelectedSquare(null);
