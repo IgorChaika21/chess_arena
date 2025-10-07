@@ -22,7 +22,7 @@ interface ChessGridProps {
 }
 
 const ChessGrid: React.FC<ChessGridProps> = ({ board, onSquareClick }) => {
-  const { selectedSquare, currentPlayer } = useGameStore();
+  const { selectedSquare, currentPlayer, enPassantTarget } = useGameStore();
 
   const possibleMoves = useMemo(() => {
     if (!selectedSquare) return [];
@@ -43,7 +43,8 @@ const ChessGrid: React.FC<ChessGridProps> = ({ board, onSquareClick }) => {
             board,
             [selectedRow, selectedCol],
             [row, col],
-            currentPlayer
+            currentPlayer,
+            enPassantTarget
           )
         ) {
           moves.push([row, col]);
@@ -52,7 +53,7 @@ const ChessGrid: React.FC<ChessGridProps> = ({ board, onSquareClick }) => {
     }
 
     return moves;
-  }, [board, selectedSquare, currentPlayer]);
+  }, [board, selectedSquare, currentPlayer, enPassantTarget]);
 
   const renderSquare = (rowIndex: number, colIndex: number) => {
     const isDark = (rowIndex + colIndex) % 2 === 1;

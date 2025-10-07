@@ -10,11 +10,13 @@ interface GameState {
   selectedSquare: BoardPosition | null;
   gameStatus: GameStatus;
   darkMode: boolean;
+  enPassantTarget: BoardPosition | null;
 
   setBoard: (board: Board) => void;
   setCurrentPlayer: (player: Colors) => void;
   setSelectedSquare: (square: BoardPosition | null) => void;
   setGameStatus: (status: GameStatus) => void;
+  setEnPassantTarget: (target: BoardPosition | null) => void;
   toggleTheme: () => void;
   resetGame: () => void;
 }
@@ -25,11 +27,13 @@ export const useGameStore = create<GameState>(set => ({
   selectedSquare: null,
   gameStatus: GameStatus.IN_PROGRESS,
   darkMode: true,
+  enPassantTarget: null,
 
   setBoard: board => set({ board }),
   setCurrentPlayer: player => set({ currentPlayer: player }),
   setSelectedSquare: square => set({ selectedSquare: square }),
   setGameStatus: status => set({ gameStatus: status }),
+  setEnPassantTarget: target => set({ enPassantTarget: target }),
   toggleTheme: () => set(state => ({ darkMode: !state.darkMode })),
   resetGame: () =>
     set({
@@ -37,5 +41,6 @@ export const useGameStore = create<GameState>(set => ({
       currentPlayer: Colors.WHITE,
       selectedSquare: null,
       gameStatus: GameStatus.IN_PROGRESS,
+      enPassantTarget: null,
     }),
 }));

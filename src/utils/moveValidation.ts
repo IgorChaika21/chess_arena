@@ -1,13 +1,14 @@
 import type { Board, BoardPosition } from '@/types/types';
 import { Colors, FigureNames } from '@/types/types';
 
-import { doesMovePutKingInCheck } from './gameStateHelpers';
+import { doesMovePutKingInCheck, isKingInCheck } from './gameStateHelpers';
 
 export const isValidMove = (
   board: Board,
   from: BoardPosition,
   to: BoardPosition,
-  currentPlayer: Colors
+  currentPlayer: Colors,
+  enPassantTarget: BoardPosition | null = null
 ): boolean => {
   const [fromRow, fromCol] = from;
   const [toRow, toCol] = to;
@@ -20,7 +21,8 @@ export const isValidMove = (
 
   switch (piece.type) {
     case FigureNames.PAWN:
-      if (!isValidPawnMove(board, from, to, piece.color)) return false;
+      if (!isValidPawnMove(board, from, to, piece.color, enPassantTarget))
+        return false;
       break;
     case FigureNames.ROOK:
       if (!isValidRookMove(board, from, to)) return false;
@@ -35,24 +37,30 @@ export const isValidMove = (
       if (!isValidQueenMove(board, from, to)) return false;
       break;
     case FigureNames.KING:
-      if (!isValidKingMove(from, to)) return false;
+      if (
+        !isValidKingMove(
+          board,
+          from,
+          to,
+          piece.hasMoved || false,
+          currentPlayer
+        )
+      )
+        return false;
       break;
     default:
       return false;
   }
 
-  if (doesMovePutKingInCheck(board, from, to, currentPlayer)) {
-    return false;
-  }
-
-  return true;
+  return !doesMovePutKingInCheck(board, from, to, currentPlayer);
 };
 
 const isValidPawnMove = (
   board: Board,
   from: BoardPosition,
   to: BoardPosition,
-  color: Colors
+  color: Colors,
+  enPassantTarget: BoardPosition | null = null
 ): boolean => {
   const [fromRow, fromCol] = from;
   const [toRow, toCol] = to;
@@ -69,7 +77,23 @@ const isValidPawnMove = (
       return !board[fromRow + direction][fromCol];
     }
   } else if (colDiff === 1 && rowDiff === direction) {
-    return !!targetPiece;
+    if (targetPiece) return true;
+
+    if (enPassantTarget) {
+      const [targetRow, targetCol] = enPassantTarget;
+
+      if (toRow === targetRow && toCol === targetCol) {
+        const capturedPawnRow = fromRow;
+        const capturedPawnCol = toCol;
+        const capturedPawn = board[capturedPawnRow][capturedPawnCol];
+
+        return (
+          !!capturedPawn &&
+          capturedPawn.type === FigureNames.PAWN &&
+          capturedPawn.color !== color
+        );
+      }
+    }
   }
 
   return false;
@@ -146,11 +170,61 @@ const isValidQueenMove = (
   return isValidRookMove(board, from, to) || isValidBishopMove(board, from, to);
 };
 
-const isValidKingMove = (from: BoardPosition, to: BoardPosition): boolean => {
+const isValidKingMove = (
+  board: Board,
+  from: BoardPosition,
+  to: BoardPosition,
+  hasMoved: boolean,
+  currentPlayer: Colors
+): boolean => {
   const [fromRow, fromCol] = from;
   const [toRow, toCol] = to;
   const rowDiff = Math.abs(toRow - fromRow);
   const colDiff = Math.abs(toCol - fromCol);
 
-  return rowDiff <= 1 && colDiff <= 1;
+  if (rowDiff <= 1 && colDiff <= 1) return true;
+
+  if (rowDiff === 0 && colDiff === 2 && !hasMoved) {
+    return isValidCastlingMove(board, from, to, currentPlayer);
+  }
+
+  return false;
+};
+
+const isValidCastlingMove = (
+  board: Board,
+  from: BoardPosition,
+  to: BoardPosition,
+  currentPlayer: Colors
+): boolean => {
+  const [fromRow, fromCol] = from;
+  const [, toCol] = to;
+  const isKingside = toCol > fromCol;
+  const rookCol = isKingside ? 7 : 0;
+  const rook = board[fromRow][rookCol];
+
+  if (!rook || rook.type !== FigureNames.ROOK || rook.hasMoved) {
+    return false;
+  }
+  const pathStart = Math.min(fromCol, rookCol) + 1;
+  const pathEnd = Math.max(fromCol, rookCol);
+
+  for (let col = pathStart; col < pathEnd; col++) {
+    if (board[fromRow][col]) return false;
+  }
+
+  if (isKingInCheck(board, currentPlayer)) return false;
+
+  const kingStep = isKingside ? 1 : -1;
+  for (let col = fromCol; col !== toCol; col += kingStep) {
+    const tempBoard = [...board.map(row => [...row])];
+    tempBoard[fromRow][col] = { type: FigureNames.KING, color: currentPlayer };
+    tempBoard[fromRow][fromCol] = null;
+
+    if (isKingInCheck(tempBoard, currentPlayer)) {
+      return false;
+    }
+  }
+
+  return true;
 };
