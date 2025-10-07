@@ -54,7 +54,8 @@ const Button = styled.button`
 `;
 
 const GameInfo: React.FC = () => {
-  const { currentPlayer, gameStatus, resetGame } = useGameStore();
+  const { currentPlayer, gameStatus, resetGame, startGame, gameStarted } =
+    useGameStore();
 
   const getStatusText = () => {
     switch (gameStatus) {
@@ -79,11 +80,16 @@ const GameInfo: React.FC = () => {
         <StatusText $variant={statusInfo.variant}>
           Status: {statusInfo.text}
         </StatusText>
+        {!gameStarted && <StatusText>Click "Start Game" to begin</StatusText>}
       </Section>
 
       <Section>
         <SectionTitle>Actions</SectionTitle>
-        <Button onClick={resetGame}>New Game</Button>
+        {!gameStarted ? (
+          <Button onClick={startGame}>Start Game</Button>
+        ) : (
+          <Button onClick={resetGame}>New Game</Button>
+        )}
       </Section>
     </GameInfoContainer>
   );

@@ -1,9 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useCallback } from 'react';
 
 import { columnLabels, rowLabels } from '@/constants/constants';
-import { useGameStore } from '@/store/useGameStore';
-import type { Board } from '@/types/types';
-import { isValidMove } from '@/utils/moveValidation';
+import type { Board, BoardPosition } from '@/types/types';
 
 import Square from '../Square/Square';
 
@@ -18,63 +16,54 @@ import {
 
 interface ChessGridProps {
   board: Board;
-  onSquareClick?: (row: number, col: number) => void;
+  selectedSquare: BoardPosition | null;
+  possibleMoves?: BoardPosition[];
+  handleSquareClick: (row: number, col: number) => void;
+  size?: number;
 }
 
-const ChessGrid: React.FC<ChessGridProps> = ({ board, onSquareClick }) => {
-  const { selectedSquare, currentPlayer, enPassantTarget } = useGameStore();
+const ChessGrid: React.FC<ChessGridProps> = ({
+  board,
+  selectedSquare,
+  possibleMoves = [],
+  handleSquareClick,
+}) => {
+  const isSquareSelected = useCallback(
+    (rowIndex: number, colIndex: number): boolean => {
+      return (
+        selectedSquare !== null &&
+        selectedSquare[0] === rowIndex &&
+        selectedSquare[1] === colIndex
+      );
+    },
+    [selectedSquare]
+  );
 
-  const possibleMoves = useMemo(() => {
-    if (!selectedSquare) return [];
+  const isMoveOption = useCallback(
+    (rowIndex: number, colIndex: number): boolean => {
+      return possibleMoves.some(([r, c]) => r === rowIndex && c === colIndex);
+    },
+    [possibleMoves]
+  );
 
-    const [selectedRow, selectedCol] = selectedSquare;
-    const piece = board[selectedRow][selectedCol];
+  const renderSquare = useCallback(
+    (rowIndex: number, colIndex: number) => {
+      const isDark = (rowIndex + colIndex) % 2 === 1;
+      const piece = board[rowIndex][colIndex];
 
-    if (!piece || piece.color !== currentPlayer) return [];
-
-    const moves: [number, number][] = [];
-
-    for (let row = 0; row < 8; row++) {
-      for (let col = 0; col < 8; col++) {
-        if (row === selectedRow && col === selectedCol) continue;
-
-        if (
-          isValidMove(
-            board,
-            [selectedRow, selectedCol],
-            [row, col],
-            currentPlayer,
-            enPassantTarget
-          )
-        ) {
-          moves.push([row, col]);
-        }
-      }
-    }
-
-    return moves;
-  }, [board, selectedSquare, currentPlayer, enPassantTarget]);
-
-  const renderSquare = (rowIndex: number, colIndex: number) => {
-    const isDark = (rowIndex + colIndex) % 2 === 1;
-    const piece = board[rowIndex]?.[colIndex];
-    const isSelected =
-      selectedSquare?.[0] === rowIndex && selectedSquare?.[1] === colIndex;
-    const isMoveOption = possibleMoves.some(
-      ([r, c]) => r === rowIndex && c === colIndex
-    );
-
-    return (
-      <Square
-        key={`${rowIndex}-${colIndex}`}
-        isDark={isDark}
-        isSelected={isSelected}
-        isMoveOption={isMoveOption}
-        piece={piece}
-        onClick={() => onSquareClick?.(rowIndex, colIndex)}
-      />
-    );
-  };
+      return (
+        <Square
+          key={`${rowIndex}-${colIndex}`}
+          isDark={isDark}
+          isSelected={isSquareSelected(rowIndex, colIndex)}
+          isMoveOption={isMoveOption(rowIndex, colIndex)}
+          onClick={() => handleSquareClick(rowIndex, colIndex)}
+          piece={piece}
+        />
+      );
+    },
+    [board, isSquareSelected, isMoveOption, handleSquareClick]
+  );
 
   return (
     <ChessBoardContainer>

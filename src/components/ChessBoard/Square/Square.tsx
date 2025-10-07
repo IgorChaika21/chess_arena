@@ -1,14 +1,13 @@
 import React from 'react';
 
+import ChessPiece from '@/components/ChessBoard/ChessPiece/ChessPiece';
 import type { ChessPiece as ChessPieceType } from '@/types/types';
-
-import ChessPiece from '../ChessPiece/ChessPiece';
 
 import { SquareContainer } from './Square.styles';
 
 interface SquareProps {
   isDark: boolean;
-  isSelected?: boolean;
+  isSelected: boolean;
   isMoveOption?: boolean;
   onClick: () => void;
   piece?: ChessPieceType | null;
@@ -16,10 +15,10 @@ interface SquareProps {
 
 const Square: React.FC<SquareProps> = ({
   isDark,
-  isSelected = false,
-  isMoveOption = false,
+  isSelected,
   onClick,
   piece,
+  isMoveOption = false,
 }) => {
   return (
     <SquareContainer
