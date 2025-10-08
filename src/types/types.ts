@@ -19,6 +19,12 @@ export enum GameStatus {
   STALEMATE = 'stalemate',
 }
 
+export type PromotionPieceType =
+  | FigureNames.QUEEN
+  | FigureNames.ROOK
+  | FigureNames.BISHOP
+  | FigureNames.KNIGHT;
+
 export interface ChessPiece {
   color: Colors;
   type: FigureNames;
@@ -28,3 +34,8 @@ export interface ChessPiece {
 export type BoardPosition = [number, number];
 
 export type Board = (ChessPiece | null)[][];
+
+export interface PromotionMove {
+  from: BoardPosition;
+  to: BoardPosition;
+}

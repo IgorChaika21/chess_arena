@@ -6,7 +6,7 @@ import { GlobalStyles } from '@/styles/GlobalStyles';
 
 import ChessBoard from './components/ChessBoard/ChessBoard';
 import GameInfo from './components/GameInfo/GameInfo';
-import ThemeSwitcher from './components/ThemeSwitcher/ThemeSwitcher';
+import ThemeSwitcher from './components/ui/ThemeSwitcher/ThemeSwitcher';
 
 const AppContainer = styled.div`
   display: flex;

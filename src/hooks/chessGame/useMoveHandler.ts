@@ -2,7 +2,11 @@ import { useMemo, useCallback } from 'react';
 
 import { useGameStore } from '@/store/useGameStore';
 import { Colors, FigureNames, GameStatus } from '@/types/types';
-import type { ChessPiece, BoardPosition } from '@/types/types';
+import type {
+  ChessPiece,
+  BoardPosition,
+  PromotionPieceType,
+} from '@/types/types';
 import { isKingInCheck } from '@/utils/gameStateHelpers';
 import { isCheckmate, isStalemate } from '@/utils/gameStateRules';
 import { isValidMove } from '@/utils/moveValidation';
@@ -17,6 +21,8 @@ export function useMoveHandler(boardState: UseBoardState) {
     setSelectedSquare,
     enPassantTarget,
     setEnPassantTarget,
+    promotionMove,
+    setPromotionMove,
   } = boardState;
 
   const {
@@ -26,6 +32,56 @@ export function useMoveHandler(boardState: UseBoardState) {
     setGameStatus,
     gameStarted,
   } = useGameStore();
+
+  const handlePromotion = useCallback(
+    (pieceType: PromotionPieceType) => {
+      if (!promotionMove) return;
+
+      const { from, to } = promotionMove;
+      const [fromRow, fromCol] = from;
+      const [toRow, toCol] = to;
+
+      const newBoard = board.map(row => [...row]);
+      const piece = newBoard[fromRow][fromCol];
+
+      if (piece && piece.type === FigureNames.PAWN) {
+        newBoard[toRow][toCol] = {
+          color: piece.color,
+          type: pieceType,
+          hasMoved: true,
+        };
+        newBoard[fromRow][fromCol] = null;
+
+        setBoard(newBoard);
+        setPromotionMove(null);
+        setSelectedSquare(null);
+
+        const nextPlayer =
+          currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
+        setCurrentPlayer(nextPlayer);
+
+        let newGameStatus = GameStatus.IN_PROGRESS;
+        if (isCheckmate(newBoard, nextPlayer)) {
+          newGameStatus = GameStatus.CHECKMATE;
+        } else if (isStalemate(newBoard, nextPlayer)) {
+          newGameStatus = GameStatus.STALEMATE;
+        } else if (isKingInCheck(newBoard, nextPlayer)) {
+          newGameStatus = GameStatus.CHECK;
+        }
+        setGameStatus(newGameStatus);
+      }
+    },
+    [
+      promotionMove,
+      board,
+      currentPlayer,
+      setBoard,
+      setPromotionMove,
+      setSelectedSquare,
+      setCurrentPlayer,
+      setGameStatus,
+    ]
+  );
 
   const canSelectPiece = useCallback(
     (piece: ChessPiece | null): boolean => {
@@ -67,7 +123,7 @@ export function useMoveHandler(boardState: UseBoardState) {
 
   const handleSquareClick = useCallback(
     (row: number, col: number) => {
-      if (!gameStarted) {
+      if (!gameStarted || promotionMove) {
         return;
       }
 
@@ -111,6 +167,15 @@ export function useMoveHandler(boardState: UseBoardState) {
         ) {
           const newBoard = [...board.map(row => [...row])];
           let newEnPassantTarget: BoardPosition | null = null;
+
+          if (
+            selectedPiece.type === FigureNames.PAWN &&
+            ((selectedPiece.color === Colors.WHITE && row === 0) ||
+              (selectedPiece.color === Colors.BLACK && row === 7))
+          ) {
+            setPromotionMove({ from: [sr, sc], to: [row, col] });
+            return;
+          }
 
           if (
             selectedPiece.type === FigureNames.KING &&
@@ -160,7 +225,6 @@ export function useMoveHandler(boardState: UseBoardState) {
           setCurrentPlayer(nextPlayer);
 
           let newGameStatus = GameStatus.IN_PROGRESS;
-
           if (isCheckmate(newBoard, nextPlayer)) {
             newGameStatus = GameStatus.CHECKMATE;
           } else if (isStalemate(newBoard, nextPlayer)) {
@@ -168,7 +232,6 @@ export function useMoveHandler(boardState: UseBoardState) {
           } else if (isKingInCheck(newBoard, nextPlayer)) {
             newGameStatus = GameStatus.CHECK;
           }
-
           setGameStatus(newGameStatus);
         } else {
           setSelectedSquare(null);
@@ -182,6 +245,7 @@ export function useMoveHandler(boardState: UseBoardState) {
       currentPlayer,
       gameStatus,
       gameStarted,
+      promotionMove,
       isSameSquare,
       canSelectPiece,
       setBoard,
@@ -189,11 +253,13 @@ export function useMoveHandler(boardState: UseBoardState) {
       setEnPassantTarget,
       setCurrentPlayer,
       setGameStatus,
+      setPromotionMove,
     ]
   );
 
   return {
     handleSquareClick,
+    handlePromotion,
     possibleMoves,
   };
 }
