@@ -31,9 +31,14 @@ export interface ChessPiece {
   hasMoved?: boolean;
 }
 
-export type BoardPosition = [number, number];
+export interface CapturedPieces {
+  white: ChessPiece[];
+  black: ChessPiece[];
+}
 
 export type Board = (ChessPiece | null)[][];
+
+export type BoardPosition = [number, number];
 
 export interface PromotionMove {
   from: BoardPosition;

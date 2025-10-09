@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
+import { useGameTimer, formatTime } from '@/hooks/chessGame/useGameTimer';
 import { useGameStore, useEffectiveGameStatus } from '@/store/useGameStore';
 import { GameStatus, Colors } from '@/types/types';
 
-import ConfirmationModal from '../ui/modals/ConfirmationModal/ConfirmationModal';
+import { ConfirmationModal } from '../ui/modals';
+
+import CapturedPiecesSection from './CapturedPiecesSection';
 
 const GameInfoContainer = styled.div`
   background-color: ${props => props.theme.bgColor};
@@ -56,23 +59,25 @@ const Button = styled.button`
 `;
 
 const GameInfo: React.FC = () => {
-  const {
-    currentPlayer,
-    resetGame,
-    startGame,
-    gameStarted,
+  const { 
+    currentPlayer, 
+    resetGame, 
+    startGame, 
+    gameStarted, 
     resign,
-    resignedPlayer,
+    resignedPlayer
   } = useGameStore();
-
+  
   const effectiveGameStatus = useEffectiveGameStatus();
   const [showResignModal, setShowResignModal] = useState(false);
 
+  const timeElapsed = useGameTimer(gameStarted, effectiveGameStatus);
+
   const getStatusText = () => {
     if (resignedPlayer) {
-      return {
-        text: `${resignedPlayer === Colors.WHITE ? 'White' : 'Black'} resigned!`,
-        variant: 'checkmate' as const,
+      return { 
+        text: `${resignedPlayer === Colors.WHITE ? 'White' : 'Black'} resigned!`, 
+        variant: 'checkmate' as const 
       };
     }
 
@@ -102,9 +107,8 @@ const GameInfo: React.FC = () => {
   };
 
   const statusInfo = getStatusText();
-  const isGameOver =
-    effectiveGameStatus === GameStatus.CHECKMATE ||
-    effectiveGameStatus === GameStatus.STALEMATE;
+  const isGameOver = effectiveGameStatus === GameStatus.CHECKMATE || 
+                    effectiveGameStatus === GameStatus.STALEMATE;
 
   return (
     <GameInfoContainer>
@@ -114,8 +118,10 @@ const GameInfo: React.FC = () => {
         <StatusText $variant={statusInfo.variant}>
           Status: {statusInfo.text}
         </StatusText>
+        <StatusText>Time: {formatTime(timeElapsed)}</StatusText>
         {!gameStarted && <StatusText>Click "Start Game" to begin</StatusText>}
       </Section>
+      {gameStarted && <CapturedPiecesSection />}
 
       <Section>
         <SectionTitle>Actions</SectionTitle>
@@ -124,10 +130,7 @@ const GameInfo: React.FC = () => {
         ) : (
           <>
             {!isGameOver && (
-              <Button
-                onClick={handleResignClick}
-                style={{ backgroundColor: '#f44336', color: 'white' }}
-              >
+              <Button onClick={handleResignClick} style={{ backgroundColor: '#f44336', color: 'white' }}>
                 Resign
               </Button>
             )}

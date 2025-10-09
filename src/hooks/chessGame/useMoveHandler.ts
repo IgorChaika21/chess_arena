@@ -2,11 +2,7 @@ import { useMemo, useCallback } from 'react';
 
 import { useGameStore } from '@/store/useGameStore';
 import { Colors, FigureNames, GameStatus } from '@/types/types';
-import type {
-  ChessPiece,
-  BoardPosition,
-  PromotionPieceType,
-} from '@/types/types';
+import type { ChessPiece, BoardPosition, PromotionPieceType } from '@/types/types';
 import { isKingInCheck } from '@/utils/gameStateHelpers';
 import { isCheckmate, isStalemate } from '@/utils/gameStateRules';
 import { isValidMove } from '@/utils/moveValidation';
@@ -31,57 +27,46 @@ export function useMoveHandler(boardState: UseBoardState) {
     gameStatus,
     setGameStatus,
     gameStarted,
+    capturedPieces,
+    setCapturedPieces,
   } = useGameStore();
 
-  const handlePromotion = useCallback(
-    (pieceType: PromotionPieceType) => {
-      if (!promotionMove) return;
+  const handlePromotion = useCallback((pieceType: PromotionPieceType) => {
+  if (!promotionMove) return;
 
-      const { from, to } = promotionMove;
-      const [fromRow, fromCol] = from;
-      const [toRow, toCol] = to;
+  const { from, to } = promotionMove;
+  const [fromRow, fromCol] = from;
+  const [toRow, toCol] = to;
+  
+  const newBoard = board.map(row => [...row]);
+  const piece = newBoard[fromRow][fromCol];
 
-      const newBoard = board.map(row => [...row]);
-      const piece = newBoard[fromRow][fromCol];
+  if (piece && piece.type === FigureNames.PAWN) {
+    newBoard[toRow][toCol] = {
+      color: piece.color,
+      type: pieceType,
+      hasMoved: true,
+    };
+    newBoard[fromRow][fromCol] = null;
 
-      if (piece && piece.type === FigureNames.PAWN) {
-        newBoard[toRow][toCol] = {
-          color: piece.color,
-          type: pieceType,
-          hasMoved: true,
-        };
-        newBoard[fromRow][fromCol] = null;
+    setBoard(newBoard);
+    setPromotionMove(null);
+    setSelectedSquare(null);
 
-        setBoard(newBoard);
-        setPromotionMove(null);
-        setSelectedSquare(null);
+    const nextPlayer = currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
+    setCurrentPlayer(nextPlayer);
 
-        const nextPlayer =
-          currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
-        setCurrentPlayer(nextPlayer);
-
-        let newGameStatus = GameStatus.IN_PROGRESS;
-        if (isCheckmate(newBoard, nextPlayer)) {
-          newGameStatus = GameStatus.CHECKMATE;
-        } else if (isStalemate(newBoard, nextPlayer)) {
-          newGameStatus = GameStatus.STALEMATE;
-        } else if (isKingInCheck(newBoard, nextPlayer)) {
-          newGameStatus = GameStatus.CHECK;
-        }
-        setGameStatus(newGameStatus);
-      }
-    },
-    [
-      promotionMove,
-      board,
-      currentPlayer,
-      setBoard,
-      setPromotionMove,
-      setSelectedSquare,
-      setCurrentPlayer,
-      setGameStatus,
-    ]
-  );
+    let newGameStatus = GameStatus.IN_PROGRESS;
+    if (isCheckmate(newBoard, nextPlayer)) {
+      newGameStatus = GameStatus.CHECKMATE;
+    } else if (isStalemate(newBoard, nextPlayer)) {
+      newGameStatus = GameStatus.STALEMATE;
+    } else if (isKingInCheck(newBoard, nextPlayer)) {
+      newGameStatus = GameStatus.CHECK;
+    }
+    setGameStatus(newGameStatus);
+  }
+}, [promotionMove, board, currentPlayer, setBoard, setPromotionMove, setSelectedSquare, setCurrentPlayer, setGameStatus]);
 
   const canSelectPiece = useCallback(
     (piece: ChessPiece | null): boolean => {
@@ -110,7 +95,7 @@ export function useMoveHandler(boardState: UseBoardState) {
             selectedSquare,
             [r, c],
             currentPlayer,
-            enPassantTarget
+            enPassantTarget,
           )
         ) {
           moves.push([r, c]);
@@ -162,18 +147,25 @@ export function useMoveHandler(boardState: UseBoardState) {
             [sr, sc],
             clickedSquare,
             currentPlayer,
-            enPassantTarget
+            enPassantTarget,
           )
         ) {
           const newBoard = [...board.map(row => [...row])];
           let newEnPassantTarget: BoardPosition | null = null;
+          const newCapturedPieces = { ...capturedPieces };
+
+          const targetPiece = newBoard[row][col];
+          if (targetPiece) {
+            newCapturedPieces[targetPiece.color].push(targetPiece);
+          }
 
           if (
             selectedPiece.type === FigureNames.PAWN &&
             ((selectedPiece.color === Colors.WHITE && row === 0) ||
-              (selectedPiece.color === Colors.BLACK && row === 7))
+             (selectedPiece.color === Colors.BLACK && row === 7))
           ) {
             setPromotionMove({ from: [sr, sc], to: [row, col] });
+            setCapturedPieces(newCapturedPieces);
             return;
           }
 
@@ -201,7 +193,11 @@ export function useMoveHandler(boardState: UseBoardState) {
           ) {
             const capturedPawnRow = sr;
             const capturedPawnCol = col;
-            newBoard[capturedPawnRow][capturedPawnCol] = null;
+            const capturedPawn = newBoard[capturedPawnRow][capturedPawnCol];
+            if (capturedPawn) {
+              newCapturedPieces[capturedPawn.color].push(capturedPawn);
+              newBoard[capturedPawnRow][capturedPawnCol] = null;
+            }
           }
 
           if (
@@ -217,11 +213,11 @@ export function useMoveHandler(boardState: UseBoardState) {
           newBoard[sr][sc] = null;
 
           setBoard(newBoard);
+          setCapturedPieces(newCapturedPieces);
           setSelectedSquare(null);
           setEnPassantTarget(newEnPassantTarget);
 
-          const nextPlayer =
-            currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
+          const nextPlayer = currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
           setCurrentPlayer(nextPlayer);
 
           let newGameStatus = GameStatus.IN_PROGRESS;
@@ -246,6 +242,7 @@ export function useMoveHandler(boardState: UseBoardState) {
       gameStatus,
       gameStarted,
       promotionMove,
+      capturedPieces,
       isSameSquare,
       canSelectPiece,
       setBoard,
@@ -254,6 +251,7 @@ export function useMoveHandler(boardState: UseBoardState) {
       setCurrentPlayer,
       setGameStatus,
       setPromotionMove,
+      setCapturedPieces,
     ]
   );
 

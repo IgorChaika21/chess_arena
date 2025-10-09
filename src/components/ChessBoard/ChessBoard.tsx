@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import useChessGame from '@/hooks/chessGame/useChessGame';
 import { media } from '@/styles/breakpoints';
 
-import PromotionModal from '../ui/modals/PromotionModal/PromotionModal';
+import { PromotionModal } from '../ui/modals';
 
 import ChessGrid from './ChessGrid/ChessGrid';
 
