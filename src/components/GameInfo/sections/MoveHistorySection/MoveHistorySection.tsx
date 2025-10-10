@@ -5,6 +5,8 @@ import { useGameStore } from '@/store/useGameStore';
 import type { MoveHistory } from '@/types/types';
 import { Colors } from '@/types/types';
 
+import { Section } from '../sections.styles';
+
 import {
   MovesHeader,
   StyledSectionTitle,
@@ -15,7 +17,6 @@ import {
   Move,
   NoMoves,
 } from './MoveHistorySection.styles';
-import { Section } from './sections.styles';
 
 const MoveHistorySection: React.FC = () => {
   const { moveHistory } = useGameStore();

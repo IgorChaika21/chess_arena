@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 import { Colors } from '@/types/types';
 
-import { SectionTitle } from './sections.styles';
+import { SectionTitle } from '../sections.styles';
 
 export const MovesHeader = styled.div`
   display: flex;

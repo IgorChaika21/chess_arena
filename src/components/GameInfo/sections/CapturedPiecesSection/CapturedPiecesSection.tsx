@@ -5,6 +5,8 @@ import { useGameStore } from '@/store/useGameStore';
 import { Colors, FigureNames } from '@/types/types';
 import type { ChessPiece as ChessPieceType } from '@/types/types';
 
+import { Section, SectionTitle } from '../sections.styles';
+
 import {
   CapturedPiecesContainer,
   CapturedPiecesSectionWrapper,
@@ -14,7 +16,6 @@ import {
   CapturedPiece,
   NoCaptured,
 } from './CapturedPiecesSection.styles';
-import { Section, SectionTitle } from './sections.styles';
 
 const CapturedPiecesSection: React.FC = () => {
   const { capturedPieces } = useGameStore();

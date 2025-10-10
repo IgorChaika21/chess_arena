@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
-import CapturedPiecesSection from '@/components/GameInfo/CapturedPiecesSection';
-import MoveHistorySection from '@/components/GameInfo/MoveHistorySection';
+import CapturedPiecesSection from '@/components/GameInfo/sections/CapturedPiecesSection/CapturedPiecesSection';
+import MoveHistorySection from '@/components/GameInfo/sections/MoveHistorySection/MoveHistorySection';
 import { useGameTimer, formatTime } from '@/hooks/chessGame/useGameTimer';
 import { useGameStore, useEffectiveGameStatus } from '@/store/useGameStore';
 import { GameStatus, Colors } from '@/types/types';
