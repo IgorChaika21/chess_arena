@@ -11,6 +11,8 @@ export const SquareContainer = styled.div<{
   align-items: center;
   position: relative;
   cursor: pointer;
+  min-width: 0;
+  min-height: 0;
   background-color: ${props =>
     props.$isSelected
       ? props.theme.chessSelected

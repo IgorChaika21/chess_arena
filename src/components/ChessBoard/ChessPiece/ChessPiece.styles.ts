@@ -1,13 +1,10 @@
 import styled from 'styled-components';
 
 export const ChessPieceImage = styled.img<{ $size: number }>`
-  width: ${props => props.$size}px;
-  height: ${props => props.$size}px;
+  width: min(${props => props.$size}px, 8vmin);
+  height: min(${props => props.$size}px, 8vmin);
   user-select: none;
   pointer-events: none;
-
-  @media (max-width: 768px) {
-    width: ${props => props.$size * 0.8}px;
-    height: ${props => props.$size * 0.8}px;
-  }
+  max-width: 100%;
+  max-height: 100%;
 `;

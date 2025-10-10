@@ -1,79 +1,20 @@
-import React, { useMemo, type JSX } from 'react';
-import styled from 'styled-components';
+import React, { useMemo } from 'react';
 
 import ChessPiece from '@/components/ChessBoard/ChessPiece/ChessPiece';
 import { useGameStore } from '@/store/useGameStore';
 import { Colors, FigureNames } from '@/types/types';
 import type { ChessPiece as ChessPieceType } from '@/types/types';
 
-const Section = styled.div`
-  background-color: ${props => props.theme.sectionBg};
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid ${props => props.theme.borderColor};
-  margin-bottom: 16px;
-`;
-
-const SectionTitle = styled.h3`
-  margin-bottom: 12px;
-  color: ${props => props.theme.textColor};
-  font-size: 1.1rem;
-`;
-
-const CapturedPiecesContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`;
-
-const CapturedPiecesRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const CapturedLabel = styled.span`
-  font-weight: 500;
-  color: ${props => props.theme.textColor};
-  min-width: 80px;
-`;
-
-const CapturedPiecesList = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  flex: 1;
-`;
-
-const CapturedPiece = styled.div<{ $color: Colors }>`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background-color: ${props =>
-    props.$color === Colors.WHITE
-      ? 'rgba(0, 0, 0, 0.7)'
-      : 'rgba(255, 255, 255, 0.7)'};
-  color: ${props => props.$color};
-  border: 1px solid
-    ${props =>
-      props.$color === Colors.WHITE
-        ? 'rgba(255, 255, 255, 0.2)'
-        : 'rgba(0, 0, 0, 0.2)'};
-`;
-
-const PieceCount = styled.span`
-  font-size: 0.8rem;
-  font-weight: 600;
-`;
-
-const NoCaptured = styled.span`
-  color: ${props => props.theme.textColor}80;
-  font-style: italic;
-  font-size: 0.9rem;
-`;
+import {
+  CapturedPiecesContainer,
+  CapturedPiecesSectionWrapper,
+  CapturedHeader,
+  CapturedLabel,
+  CapturedPiecesList,
+  CapturedPiece,
+  NoCaptured,
+} from './CapturedPiecesSection.styles';
+import { Section, SectionTitle } from './sections.styles';
 
 const CapturedPiecesSection: React.FC = () => {
   const { capturedPieces } = useGameStore();
@@ -104,44 +45,60 @@ const CapturedPiecesSection: React.FC = () => {
     []
   );
 
-  const renderCapturedPieces = (
-    counts: Record<string, number>,
-    color: Colors
-  ) => {
-    const elements: JSX.Element[] = [];
+  const renderCapturedPieces = useMemo(() => {
+    return (counts: Record<string, number>, color: Colors) => {
+      return pieceOrder.map(type => {
+        if (!counts[type] || counts[type] === 0) return null;
 
-    pieceOrder.forEach(type => {
-      const count = counts[type];
-      if (count && count > 0) {
-        elements.push(
+        return (
           <CapturedPiece key={type} $color={color}>
-            <ChessPiece type={type} color={color} size={16} />
-            <PieceCount>×{count}</PieceCount>
+            <ChessPiece type={type} color={color} size={20} />×
+            {counts[type]}{' '}
           </CapturedPiece>
         );
-      }
-    });
+      });
+    };
+  }, [pieceOrder]);
 
-    return elements.length > 0 ? elements : <NoCaptured>None</NoCaptured>;
-  };
+  const capturedContent = useMemo(() => {
+    const whitePieces = renderCapturedPieces(pieceCounts.white, Colors.BLACK);
+    const blackPieces = renderCapturedPieces(pieceCounts.black, Colors.WHITE);
+
+    const hasWhiteCaptured = Object.keys(pieceCounts.white).length > 0;
+    const hasBlackCaptured = Object.keys(pieceCounts.black).length > 0;
+
+    return { whitePieces, blackPieces, hasWhiteCaptured, hasBlackCaptured };
+  }, [pieceCounts, renderCapturedPieces]);
 
   return (
     <Section>
       <SectionTitle>Captured Pieces</SectionTitle>
       <CapturedPiecesContainer>
-        <CapturedPiecesRow>
-          <CapturedLabel>Сaptured by white:</CapturedLabel>
-          <CapturedPiecesList>
-            {renderCapturedPieces(pieceCounts.black, Colors.BLACK)}
+        <CapturedPiecesSectionWrapper $color={Colors.WHITE}>
+          <CapturedHeader>
+            <CapturedLabel>White Captured:</CapturedLabel>
+          </CapturedHeader>
+          <CapturedPiecesList $color={Colors.WHITE}>
+            {capturedContent.hasWhiteCaptured ? (
+              capturedContent.whitePieces
+            ) : (
+              <NoCaptured>None</NoCaptured>
+            )}
           </CapturedPiecesList>
-        </CapturedPiecesRow>
+        </CapturedPiecesSectionWrapper>
 
-        <CapturedPiecesRow>
-          <CapturedLabel>Сaptured by black:</CapturedLabel>
-          <CapturedPiecesList>
-            {renderCapturedPieces(pieceCounts.white, Colors.WHITE)}
+        <CapturedPiecesSectionWrapper $color={Colors.BLACK}>
+          <CapturedHeader>
+            <CapturedLabel>Black Captured:</CapturedLabel>
+          </CapturedHeader>
+          <CapturedPiecesList $color={Colors.BLACK}>
+            {capturedContent.hasBlackCaptured ? (
+              capturedContent.blackPieces
+            ) : (
+              <NoCaptured>None</NoCaptured>
+            )}
           </CapturedPiecesList>
-        </CapturedPiecesRow>
+        </CapturedPiecesSectionWrapper>
       </CapturedPiecesContainer>
     </Section>
   );

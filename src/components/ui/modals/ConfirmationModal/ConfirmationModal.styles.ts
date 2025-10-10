@@ -17,21 +17,21 @@ export const ModalContent = styled.div`
   background-color: ${props => props.theme.sectionBg};
   border: 2px solid ${props => props.theme.borderColor};
   border-radius: 8px;
-  padding: 20px;
+  padding: 24px;
   max-width: 400px;
   width: 90%;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 `;
 
 export const ModalTitle = styled.h3`
-  margin: 0 0 15px 0;
+  margin: 0 0 16px 0;
   color: ${props => props.theme.textColor};
   font-size: 1.5rem;
   font-weight: bold;
 `;
 
 export const ModalMessage = styled.p`
-  margin: 0 0 20px 0;
+  margin: 0 0 24px 0;
   color: ${props => props.theme.textColor};
   line-height: 1.5;
 `;

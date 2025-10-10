@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 
 import { columnLabels, rowLabels } from '@/constants/constants';
 import type { Board, BoardPosition } from '@/types/types';
@@ -6,12 +6,13 @@ import type { Board, BoardPosition } from '@/types/types';
 import Square from '../Square/Square';
 
 import {
-  ChessBoardContainer,
-  ColumnLabels,
-  NotationLabel,
+  ChessBoardAndRowLabels,
   BoardGrid,
   Row,
+  ColumnLabels,
   RowLabels,
+  NotationLabel,
+  NotationColumnLabel,
 } from './ChessGrid.styles';
 
 interface ChessGridProps {
@@ -27,7 +28,11 @@ const ChessGrid: React.FC<ChessGridProps> = ({
   selectedSquare,
   possibleMoves = [],
   handleSquareClick,
+  size = 8,
 }) => {
+  const rows = useMemo(() => Array(size).fill(null), [size]);
+  const cols = useMemo(() => Array(size).fill(null), [size]);
+
   const isSquareSelected = useCallback(
     (rowIndex: number, colIndex: number): boolean => {
       return (
@@ -65,29 +70,48 @@ const ChessGrid: React.FC<ChessGridProps> = ({
     [board, isSquareSelected, isMoveOption, handleSquareClick]
   );
 
+  const renderSquareRow = useCallback(
+    (rowIndex: number) => (
+      <Row key={rowIndex}>
+        {cols.map((_, colIndex) => renderSquare(rowIndex, colIndex))}
+      </Row>
+    ),
+    [cols, renderSquare]
+  );
+
+  const renderColumnLabels = useCallback(
+    () =>
+      cols.map((_, colIndex) => (
+        <NotationColumnLabel key={`col-${colIndex}`}>
+          {columnLabels[colIndex]}
+        </NotationColumnLabel>
+      )),
+    [cols]
+  );
+
+  const renderRowLabels = useCallback(
+    () =>
+      rows.map((_, rowIndex) => (
+        <NotationLabel key={`row-${rowIndex}`}>
+          {rowLabels[rowIndex]}
+        </NotationLabel>
+      )),
+    [rows]
+  );
+
+  const renderBoard = useCallback(
+    () => rows.map((_, rowIndex) => renderSquareRow(rowIndex)),
+    [rows, renderSquareRow]
+  );
+
   return (
-    <ChessBoardContainer>
-      <ColumnLabels>
-        <div style={{ width: '25px' }} />
-        {columnLabels.map(label => (
-          <NotationLabel key={label}>{label}</NotationLabel>
-        ))}
-      </ColumnLabels>
-      <div style={{ display: 'flex' }}>
-        <RowLabels>
-          {rowLabels.map(label => (
-            <NotationLabel key={label}>{label}</NotationLabel>
-          ))}
-        </RowLabels>
-        <BoardGrid>
-          {board.map((row, rowIndex) => (
-            <Row key={rowIndex}>
-              {row.map((_, colIndex) => renderSquare(rowIndex, colIndex))}
-            </Row>
-          ))}
-        </BoardGrid>
-      </div>
-    </ChessBoardContainer>
+    <>
+      <ColumnLabels>{renderColumnLabels()}</ColumnLabels>
+      <ChessBoardAndRowLabels>
+        <RowLabels>{renderRowLabels()}</RowLabels>
+        <BoardGrid>{renderBoard()}</BoardGrid>
+      </ChessBoardAndRowLabels>
+    </>
   );
 };
 

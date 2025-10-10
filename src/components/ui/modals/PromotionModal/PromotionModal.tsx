@@ -1,3 +1,5 @@
+import React from 'react';
+
 import type { PromotionPieceType } from '@/types/types';
 import { FigureNames } from '@/types/types';
 
@@ -13,9 +15,7 @@ interface Props {
   onPromotionSelect: (pieceType: PromotionPieceType) => void;
 }
 
-const PromotionModal: React.FC<Props> = props => {
-  const { isOpen, onPromotionSelect } = props;
-
+const PromotionModal: React.FC<Props> = ({ isOpen, onPromotionSelect }) => {
   if (!isOpen) return null;
 
   const handlePromotion = (pieceType: PromotionPieceType) => {
