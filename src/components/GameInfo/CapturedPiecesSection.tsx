@@ -104,7 +104,10 @@ const CapturedPiecesSection: React.FC = () => {
     []
   );
 
-  const renderCapturedPieces = (counts: Record<string, number>, color: Colors) => {
+  const renderCapturedPieces = (
+    counts: Record<string, number>,
+    color: Colors
+  ) => {
     const elements: JSX.Element[] = [];
 
     pieceOrder.forEach(type => {
@@ -132,7 +135,7 @@ const CapturedPiecesSection: React.FC = () => {
             {renderCapturedPieces(pieceCounts.black, Colors.BLACK)}
           </CapturedPiecesList>
         </CapturedPiecesRow>
-        
+
         <CapturedPiecesRow>
           <CapturedLabel>Сaptured by black:</CapturedLabel>
           <CapturedPiecesList>

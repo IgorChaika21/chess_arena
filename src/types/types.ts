@@ -44,3 +44,14 @@ export interface PromotionMove {
   from: BoardPosition;
   to: BoardPosition;
 }
+
+export interface Move {
+  from: BoardPosition;
+  to: BoardPosition;
+  piece: ChessPiece;
+  capturedPiece: ChessPiece | null;
+  promotion?: PromotionPieceType;
+  notation: string;
+}
+
+export type MoveHistory = Move[];

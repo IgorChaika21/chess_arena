@@ -2,10 +2,15 @@ import { useMemo, useCallback } from 'react';
 
 import { useGameStore } from '@/store/useGameStore';
 import { Colors, FigureNames, GameStatus } from '@/types/types';
-import type { ChessPiece, BoardPosition, PromotionPieceType } from '@/types/types';
-import { isKingInCheck } from '@/utils/gameStateHelpers';
-import { isCheckmate, isStalemate } from '@/utils/gameStateRules';
-import { isValidMove } from '@/utils/moveValidation';
+import type {
+  ChessPiece,
+  BoardPosition,
+  PromotionPieceType,
+} from '@/types/types';
+import { createMoveRecord } from '@/utils/notation/moveRecord';
+import { isKingInCheck } from '@/utils/rules/gameStateHelpers';
+import { isCheckmate, isStalemate } from '@/utils/rules/gameStateRules';
+import { isValidMove } from '@/utils/rules/moveValidation';
 
 import type { UseBoardState } from './useBoardState';
 
@@ -29,44 +34,74 @@ export function useMoveHandler(boardState: UseBoardState) {
     gameStarted,
     capturedPieces,
     setCapturedPieces,
+    moveHistory,
+    setMoveHistory,
   } = useGameStore();
 
-  const handlePromotion = useCallback((pieceType: PromotionPieceType) => {
-  if (!promotionMove) return;
+  const handlePromotion = useCallback(
+    (pieceType: PromotionPieceType) => {
+      if (!promotionMove) return;
 
-  const { from, to } = promotionMove;
-  const [fromRow, fromCol] = from;
-  const [toRow, toCol] = to;
-  
-  const newBoard = board.map(row => [...row]);
-  const piece = newBoard[fromRow][fromCol];
+      const { from, to } = promotionMove;
+      const [fromRow, fromCol] = from;
+      const [toRow, toCol] = to;
 
-  if (piece && piece.type === FigureNames.PAWN) {
-    newBoard[toRow][toCol] = {
-      color: piece.color,
-      type: pieceType,
-      hasMoved: true,
-    };
-    newBoard[fromRow][fromCol] = null;
+      const newBoard = board.map(row => [...row]);
+      const piece = newBoard[fromRow][fromCol];
+      const newMoveHistory = [...moveHistory];
 
-    setBoard(newBoard);
-    setPromotionMove(null);
-    setSelectedSquare(null);
+      const capturedPiece = board[toRow][toCol];
 
-    const nextPlayer = currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
-    setCurrentPlayer(nextPlayer);
+      if (piece && piece.type === FigureNames.PAWN) {
+        const moveRecord = createMoveRecord(
+          board,
+          from,
+          to,
+          capturedPiece,
+          pieceType
+        );
+        newMoveHistory.push(moveRecord);
 
-    let newGameStatus = GameStatus.IN_PROGRESS;
-    if (isCheckmate(newBoard, nextPlayer)) {
-      newGameStatus = GameStatus.CHECKMATE;
-    } else if (isStalemate(newBoard, nextPlayer)) {
-      newGameStatus = GameStatus.STALEMATE;
-    } else if (isKingInCheck(newBoard, nextPlayer)) {
-      newGameStatus = GameStatus.CHECK;
-    }
-    setGameStatus(newGameStatus);
-  }
-}, [promotionMove, board, currentPlayer, setBoard, setPromotionMove, setSelectedSquare, setCurrentPlayer, setGameStatus]);
+        newBoard[toRow][toCol] = {
+          color: piece.color,
+          type: pieceType,
+          hasMoved: true,
+        };
+        newBoard[fromRow][fromCol] = null;
+
+        setBoard(newBoard);
+        setMoveHistory(newMoveHistory);
+        setPromotionMove(null);
+        setSelectedSquare(null);
+
+        const nextPlayer =
+          currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
+        setCurrentPlayer(nextPlayer);
+
+        let newGameStatus = GameStatus.IN_PROGRESS;
+        if (isCheckmate(newBoard, nextPlayer)) {
+          newGameStatus = GameStatus.CHECKMATE;
+        } else if (isStalemate(newBoard, nextPlayer)) {
+          newGameStatus = GameStatus.STALEMATE;
+        } else if (isKingInCheck(newBoard, nextPlayer)) {
+          newGameStatus = GameStatus.CHECK;
+        }
+        setGameStatus(newGameStatus);
+      }
+    },
+    [
+      promotionMove,
+      board,
+      currentPlayer,
+      moveHistory,
+      setBoard,
+      setMoveHistory,
+      setPromotionMove,
+      setSelectedSquare,
+      setCurrentPlayer,
+      setGameStatus,
+    ]
+  );
 
   const canSelectPiece = useCallback(
     (piece: ChessPiece | null): boolean => {
@@ -95,7 +130,7 @@ export function useMoveHandler(boardState: UseBoardState) {
             selectedSquare,
             [r, c],
             currentPlayer,
-            enPassantTarget,
+            enPassantTarget
           )
         ) {
           moves.push([r, c]);
@@ -147,12 +182,13 @@ export function useMoveHandler(boardState: UseBoardState) {
             [sr, sc],
             clickedSquare,
             currentPlayer,
-            enPassantTarget,
+            enPassantTarget
           )
         ) {
           const newBoard = [...board.map(row => [...row])];
           let newEnPassantTarget: BoardPosition | null = null;
           const newCapturedPieces = { ...capturedPieces };
+          const newMoveHistory = [...moveHistory];
 
           const targetPiece = newBoard[row][col];
           if (targetPiece) {
@@ -162,7 +198,7 @@ export function useMoveHandler(boardState: UseBoardState) {
           if (
             selectedPiece.type === FigureNames.PAWN &&
             ((selectedPiece.color === Colors.WHITE && row === 0) ||
-             (selectedPiece.color === Colors.BLACK && row === 7))
+              (selectedPiece.color === Colors.BLACK && row === 7))
           ) {
             setPromotionMove({ from: [sr, sc], to: [row, col] });
             setCapturedPieces(newCapturedPieces);
@@ -209,15 +245,25 @@ export function useMoveHandler(boardState: UseBoardState) {
             newEnPassantTarget = null;
           }
 
+          const moveRecord = createMoveRecord(
+            board,
+            [sr, sc],
+            [row, col],
+            targetPiece
+          );
+          newMoveHistory.push(moveRecord);
+
           newBoard[row][col] = { ...selectedPiece, hasMoved: true };
           newBoard[sr][sc] = null;
 
           setBoard(newBoard);
           setCapturedPieces(newCapturedPieces);
+          setMoveHistory(newMoveHistory);
           setSelectedSquare(null);
           setEnPassantTarget(newEnPassantTarget);
 
-          const nextPlayer = currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
+          const nextPlayer =
+            currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
           setCurrentPlayer(nextPlayer);
 
           let newGameStatus = GameStatus.IN_PROGRESS;
@@ -243,6 +289,7 @@ export function useMoveHandler(boardState: UseBoardState) {
       gameStarted,
       promotionMove,
       capturedPieces,
+      moveHistory,
       isSameSquare,
       canSelectPiece,
       setBoard,
@@ -252,6 +299,7 @@ export function useMoveHandler(boardState: UseBoardState) {
       setGameStatus,
       setPromotionMove,
       setCapturedPieces,
+      setMoveHistory,
     ]
   );
 

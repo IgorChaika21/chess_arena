@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import { Colors, GameStatus } from '@/types/types';
-import type { CapturedPieces } from '@/types/types';
+import type { CapturedPieces, MoveHistory } from '@/types/types';
 
 interface GameState {
   currentPlayer: Colors;
@@ -10,6 +10,7 @@ interface GameState {
   gameStarted: boolean;
   resignedPlayer: Colors | null;
   capturedPieces: CapturedPieces;
+  moveHistory: MoveHistory;
 
   setCurrentPlayer: (player: Colors) => void;
   setGameStatus: (status: GameStatus) => void;
@@ -18,6 +19,7 @@ interface GameState {
   startGame: () => void;
   resign: (player: Colors) => void;
   setCapturedPieces: (pieces: CapturedPieces) => void;
+  setMoveHistory: (history: MoveHistory) => void;
 }
 
 export const useGameStore = create<GameState>(set => ({
@@ -27,12 +29,15 @@ export const useGameStore = create<GameState>(set => ({
   gameStarted: false,
   resignedPlayer: null,
   capturedPieces: { white: [], black: [] },
+  moveHistory: [],
 
   setCurrentPlayer: player => set({ currentPlayer: player }),
   setGameStatus: status => set({ gameStatus: status }),
-  setCapturedPieces: (pieces: CapturedPieces) => set({ capturedPieces: pieces }),
+  setCapturedPieces: (pieces: CapturedPieces) =>
+    set({ capturedPieces: pieces }),
+  setMoveHistory: (history: MoveHistory) => set({ moveHistory: history }),
   toggleTheme: () => set(state => ({ darkMode: !state.darkMode })),
-  
+
   resetGame: () =>
     set({
       currentPlayer: Colors.WHITE,
@@ -40,8 +45,9 @@ export const useGameStore = create<GameState>(set => ({
       gameStarted: false,
       resignedPlayer: null,
       capturedPieces: { white: [], black: [] },
+      moveHistory: [],
     }),
-    
+
   startGame: () =>
     set({
       gameStarted: true,
@@ -49,6 +55,7 @@ export const useGameStore = create<GameState>(set => ({
       gameStatus: GameStatus.IN_PROGRESS,
       resignedPlayer: null,
       capturedPieces: { white: [], black: [] },
+      moveHistory: [],
     }),
 
   resign: (player: Colors) =>

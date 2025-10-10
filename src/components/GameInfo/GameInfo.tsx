@@ -8,22 +8,31 @@ import { GameStatus, Colors } from '@/types/types';
 import { ConfirmationModal } from '../ui/modals';
 
 import CapturedPiecesSection from './CapturedPiecesSection';
+import MoveHistorySection from './MoveHistorySection';
 
 const GameInfoContainer = styled.div`
   background-color: ${props => props.theme.bgColor};
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 0;
   border: 1px solid ${props => props.theme.borderColor};
-  min-width: 250px;
+  min-width: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 `;
 
 const Section = styled.div`
-  margin-bottom: 20px;
+  background-color: ${props => props.theme.sectionBg};
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid ${props => props.theme.borderColor};
+  margin-bottom: 0;
 `;
 
 const SectionTitle = styled.h3`
-  margin-bottom: 10px;
+  margin-bottom: 16px;
   color: ${props => props.theme.textColor};
+  font-size: 1.2rem;
 `;
 
 const StatusText = styled.p<{ $variant?: 'check' | 'checkmate' | 'stalemate' }>`
@@ -40,34 +49,51 @@ const StatusText = styled.p<{ $variant?: 'check' | 'checkmate' | 'stalemate' }>`
     }
   }};
   font-weight: ${props => (props.$variant ? 'bold' : 'normal')};
-  margin: 5px 0;
+  margin: 8px 0;
+  font-size: 1rem;
 `;
 
 const Button = styled.button`
   background-color: ${props => props.theme.borderColor};
   color: ${props => props.theme.textColor};
   border: none;
-  padding: 10px 16px;
-  border-radius: 4px;
+  padding: 12px 20px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
+  font-size: 1rem;
+  transition: all 0.2s ease;
 
   &:hover {
     background-color: ${props => props.theme.textColor};
     color: ${props => props.theme.bgColor};
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 12px;
+
+  @media (max-width: 400px) {
+    flex-direction: column;
   }
 `;
 
 const GameInfo: React.FC = () => {
-  const { 
-    currentPlayer, 
-    resetGame, 
-    startGame, 
-    gameStarted, 
+  const {
+    currentPlayer,
+    resetGame,
+    startGame,
+    gameStarted,
     resign,
-    resignedPlayer
+    resignedPlayer,
   } = useGameStore();
-  
+
   const effectiveGameStatus = useEffectiveGameStatus();
   const [showResignModal, setShowResignModal] = useState(false);
 
@@ -75,9 +101,9 @@ const GameInfo: React.FC = () => {
 
   const getStatusText = () => {
     if (resignedPlayer) {
-      return { 
-        text: `${resignedPlayer === Colors.WHITE ? 'White' : 'Black'} resigned!`, 
-        variant: 'checkmate' as const 
+      return {
+        text: `${resignedPlayer === Colors.WHITE ? 'White' : 'Black'} resigned!`,
+        variant: 'checkmate' as const,
       };
     }
 
@@ -107,8 +133,9 @@ const GameInfo: React.FC = () => {
   };
 
   const statusInfo = getStatusText();
-  const isGameOver = effectiveGameStatus === GameStatus.CHECKMATE || 
-                    effectiveGameStatus === GameStatus.STALEMATE;
+  const isGameOver =
+    effectiveGameStatus === GameStatus.CHECKMATE ||
+    effectiveGameStatus === GameStatus.STALEMATE;
 
   return (
     <GameInfoContainer>
@@ -122,22 +149,30 @@ const GameInfo: React.FC = () => {
         {!gameStarted && <StatusText>Click "Start Game" to begin</StatusText>}
       </Section>
       {gameStarted && <CapturedPiecesSection />}
+      {gameStarted && <MoveHistorySection />}
 
       <Section>
         <SectionTitle>Actions</SectionTitle>
         {!gameStarted ? (
           <Button onClick={startGame}>Start Game</Button>
         ) : (
-          <>
+          <ButtonGroup>
             {!isGameOver && (
-              <Button onClick={handleResignClick} style={{ backgroundColor: '#f44336', color: 'white' }}>
+              <Button
+                onClick={handleResignClick}
+                style={{
+                  backgroundColor: '#f44336',
+                  color: 'white',
+                  flex: 1,
+                }}
+              >
                 Resign
               </Button>
             )}
-            <Button onClick={resetGame}>
+            <Button onClick={resetGame} style={{ flex: 1 }}>
               {isGameOver ? 'New Game' : 'Reset Game'}
             </Button>
-          </>
+          </ButtonGroup>
         )}
       </Section>
 

@@ -22,12 +22,13 @@ const BoardContainer = styled.div`
 `;
 
 const Sidebar = styled.div`
-  width: 300px;
-  padding: 20px;
+  width: 380px;
+  padding: 24px;
   background-color: ${props => props.theme.bgColor};
   border-left: 1px solid ${props => props.theme.borderColor};
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 `;
 
 function App() {
