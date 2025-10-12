@@ -309,3 +309,5 @@ export function useMoveHandler(boardState: UseBoardState) {
     possibleMoves,
   };
 }
+
+export type UseMoveHandler = ReturnType<typeof useMoveHandler>;
