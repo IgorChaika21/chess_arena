@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from 'react';
 
 import { useGameStore } from '@/store/useGameStore';
-import { Colors, FigureNames, GameStatus } from '@/types/types';
+import { Colors, FigureNames, GameStatus, GameMode } from '@/types/types';
 import type {
   ChessPiece,
   BoardPosition,
@@ -36,6 +36,8 @@ export function useMoveHandler(boardState: UseBoardState) {
     setCapturedPieces,
     moveHistory,
     setMoveHistory,
+    playerColor,
+    gameMode,
   } = useGameStore();
 
   const handlePromotion = useCallback(
@@ -143,6 +145,10 @@ export function useMoveHandler(boardState: UseBoardState) {
 
   const handleSquareClick = useCallback(
     (row: number, col: number) => {
+      if (gameMode === GameMode.PVB && currentPlayer !== playerColor) {
+        return;
+      }
+
       if (!gameStarted || promotionMove) {
         return;
       }
@@ -292,6 +298,8 @@ export function useMoveHandler(boardState: UseBoardState) {
       moveHistory,
       isSameSquare,
       canSelectPiece,
+      gameMode,
+      playerColor,
       setBoard,
       setSelectedSquare,
       setEnPassantTarget,

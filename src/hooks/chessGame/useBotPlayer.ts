@@ -3,16 +3,11 @@ import { useEffect, useRef, useCallback } from 'react';
 import { makeBotMove } from '@/engine/botAI';
 import { StockfishService } from '@/engine/stockfishService';
 import { useGameStore } from '@/store/useGameStore';
-import { Colors, GameStatus } from '@/types/types';
+import { Colors, GameStatus, GameMode } from '@/types/types';
 import type { BoardPosition } from '@/types/types';
 import { applyMove } from '@/utils/moves/applyMove';
 
 import type { UseBoardState } from './useBoardState';
-
-enum GameMode {
-  PVP = 'pvp',
-  PVB = 'pvb',
-}
 
 interface UseBotPlayerProps {
   boardState: UseBoardState;
@@ -33,17 +28,17 @@ export function useBotPlayer({ boardState }: UseBotPlayerProps) {
     gameStatus,
     moveHistory,
     capturedPieces,
+    playerColor,
+    gameMode,
     setCurrentPlayer,
     setGameStatus,
     setMoveHistory,
     setCapturedPieces,
   } = useGameStore();
 
-  const gameMode = GameMode.PVB;
-  const playerColor = Colors.WHITE;
-
   const stockfishRef = useRef<StockfishService | null>(null);
   const lastMoveCountRef = useRef(0);
+  const hasBotMadeFirstMoveRef = useRef(false);
 
   const applyBotMove = useCallback(
     (from: BoardPosition, to: BoardPosition) => {
@@ -101,6 +96,7 @@ export function useBotPlayer({ boardState }: UseBotPlayerProps) {
       if (botMove) {
         console.log('🤖 Bot move found, applying:', botMove);
         applyBotMove(botMove.from, botMove.to);
+        hasBotMadeFirstMoveRef.current = true;
       } else {
         console.log('🤖 No valid bot move found');
       }
@@ -123,11 +119,17 @@ export function useBotPlayer({ boardState }: UseBotPlayerProps) {
       gameStarted &&
       gameMode === GameMode.PVB &&
       currentPlayer !== playerColor &&
-      currentPlayer === Colors.BLACK &&
       (gameStatus === GameStatus.IN_PROGRESS ||
         gameStatus === GameStatus.CHECK);
 
-    if (isBotTurn && moveHistory.length > lastMoveCountRef.current) {
+    const shouldBotStartFirst =
+      gameStarted &&
+      gameMode === GameMode.PVB &&
+      playerColor === Colors.BLACK &&
+      !hasBotMadeFirstMoveRef.current &&
+      moveHistory.length === 0;
+
+    if (isBotTurn || shouldBotStartFirst) {
       console.log('🤖 New bot turn detected, triggering move...');
       lastMoveCountRef.current = moveHistory.length;
 
@@ -136,6 +138,11 @@ export function useBotPlayer({ boardState }: UseBotPlayerProps) {
       }, 500);
 
       return () => clearTimeout(timer);
+    }
+
+    if (!gameStarted) {
+      hasBotMadeFirstMoveRef.current = false;
+      lastMoveCountRef.current = 0;
     }
   }, [
     gameStarted,

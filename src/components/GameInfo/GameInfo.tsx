@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import CapturedPiecesSection from '@/components/GameInfo/sections/CapturedPiecesSection/CapturedPiecesSection';
+import GameSetupSection from '@/components/GameInfo/sections/GameSetupSection/GameSetupSection';
 import MoveHistorySection from '@/components/GameInfo/sections/MoveHistorySection/MoveHistorySection';
 import { useGameTimer, formatTime } from '@/hooks/chessGame/useGameTimer';
 import { useGameStore, useEffectiveGameStatus } from '@/store/useGameStore';
@@ -18,18 +19,11 @@ import {
 } from './GameInfo.styles';
 
 const GameInfo: React.FC = () => {
-  const {
-    currentPlayer,
-    resetGame,
-    startGame,
-    gameStarted,
-    resign,
-    resignedPlayer,
-  } = useGameStore();
+  const { currentPlayer, resetGame, gameStarted, resign, resignedPlayer } =
+    useGameStore();
 
   const effectiveGameStatus = useEffectiveGameStatus();
   const [showResignModal, setShowResignModal] = useState(false);
-
   const timeElapsed = useGameTimer(gameStarted, effectiveGameStatus);
 
   const getStatusText = () => {
@@ -72,23 +66,25 @@ const GameInfo: React.FC = () => {
 
   return (
     <GameInfoContainer>
-      <Section>
-        <SectionTitle>Game Status</SectionTitle>
-        <StatusText>Current Player: {currentPlayer}</StatusText>
-        <StatusText $variant={statusInfo.variant}>
-          Status: {statusInfo.text}
-        </StatusText>
-        <StatusText>Time: {formatTime(timeElapsed)}</StatusText>
-        {!gameStarted && <StatusText>Click "Start Game" to begin</StatusText>}
-      </Section>
+      {gameStarted && (
+        <Section>
+          <SectionTitle>Game Status</SectionTitle>
+          <StatusText>Current Player: {currentPlayer}</StatusText>
+          <StatusText $variant={statusInfo.variant}>
+            Status: {statusInfo.text}
+          </StatusText>
+          <StatusText>Time: {formatTime(timeElapsed)}</StatusText>
+        </Section>
+      )}
+
+      {!gameStarted && <GameSetupSection />}
+
       {gameStarted && <CapturedPiecesSection />}
       {gameStarted && <MoveHistorySection />}
 
-      <Section>
-        <SectionTitle>Actions</SectionTitle>
-        {!gameStarted ? (
-          <Button onClick={startGame}>Start Game</Button>
-        ) : (
+      {gameStarted && (
+        <Section>
+          <SectionTitle>Actions</SectionTitle>
           <ButtonGroup>
             {!isGameOver && (
               <Button
@@ -106,8 +102,8 @@ const GameInfo: React.FC = () => {
               {isGameOver ? 'New Game' : 'Reset Game'}
             </Button>
           </ButtonGroup>
-        )}
-      </Section>
+        </Section>
+      )}
 
       <ConfirmationModal
         isOpen={showResignModal}

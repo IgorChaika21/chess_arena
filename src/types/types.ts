@@ -19,6 +19,11 @@ export enum GameStatus {
   STALEMATE = 'stalemate',
 }
 
+export enum GameMode {
+  PVP = 'pvp',
+  PVB = 'pvb',
+}
+
 export type PromotionPieceType =
   | FigureNames.QUEEN
   | FigureNames.ROOK
