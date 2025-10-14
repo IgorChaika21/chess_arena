@@ -60,3 +60,41 @@ export interface Move {
 }
 
 export type MoveHistory = Move[];
+
+export interface ApplyMoveParams {
+  board: Board;
+  from: BoardPosition;
+  to: BoardPosition;
+  currentPlayer: Colors;
+  enPassantTarget: BoardPosition | null;
+  capturedPieces: CapturedPieces;
+  moveHistory: MoveHistory;
+  promotionPieceType?: PromotionPieceType;
+}
+
+export interface ApplyMoveResult {
+  newBoard: Board;
+  newCapturedPieces: CapturedPieces;
+  newEnPassantTarget: BoardPosition | null;
+  newMoveHistory: MoveHistory;
+  newGameStatus: GameStatus;
+  nextPlayer: Colors;
+  promotionRequired: boolean;
+}
+
+export interface MoveResult {
+  newBoard: Board;
+  capturedPiece: ChessPiece | null;
+  newEnPassantTarget: BoardPosition | null;
+  newCapturedPieces: CapturedPieces;
+  promotionRequired: boolean;
+}
+
+export interface BotMoveResult {
+  newBoard: Board;
+  newCapturedPieces: CapturedPieces;
+  newEnPassantTarget: BoardPosition | null;
+  newMoveHistory: MoveHistory;
+  newGameStatus: GameStatus;
+  nextPlayer: Colors;
+}

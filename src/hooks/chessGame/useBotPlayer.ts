@@ -43,15 +43,15 @@ export function useBotPlayer({ boardState }: UseBotPlayerProps) {
   const applyBotMove = useCallback(
     (from: BoardPosition, to: BoardPosition) => {
       try {
-        const result = applyMove(
+        const result = applyMove({
           board,
           from,
           to,
           currentPlayer,
           enPassantTarget,
           capturedPieces,
-          moveHistory
-        );
+          moveHistory,
+        });
 
         setBoard(result.newBoard);
         setCapturedPieces(result.newCapturedPieces);

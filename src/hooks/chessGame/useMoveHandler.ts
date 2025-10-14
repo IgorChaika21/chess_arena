@@ -124,7 +124,7 @@ export function useMoveHandler(boardState: UseBoardState) {
             selectedSquare,
             [r, c],
             enPassantTarget,
-            currentPlayer,
+            currentPlayer
           )
         ) {
           moves.push([r, c]);
@@ -180,7 +180,7 @@ export function useMoveHandler(boardState: UseBoardState) {
             [sr, sc],
             clickedSquare,
             enPassantTarget,
-            currentPlayer,
+            currentPlayer
           )
         ) {
           const newBoard = [...board.map(row => [...row])];

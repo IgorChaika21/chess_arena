@@ -1,104 +1,117 @@
-import { Colors, FigureNames, GameStatus } from '@/types/types';
-import type {
-  Board,
-  BoardPosition,
-  CapturedPieces,
-  Move,
-  PromotionPieceType,
-} from '@/types/types';
-import { createMoveRecord } from '@/utils/notation/moveRecord';
-import { getGameStatusAfterMove } from '@/utils/rules/gameState';
+import type { ApplyMoveParams, ApplyMoveResult } from '@/types/types';
 
-export interface MoveApplicationResult {
-  newBoard: Board;
-  newCapturedPieces: CapturedPieces;
-  newEnPassantTarget: BoardPosition | null;
-  newMoveHistory: Move[];
-  newGameStatus: GameStatus;
-  nextPlayer: Colors;
-}
+import { createMoveRecord } from '../notation/moveRecord';
+import { getGameStatusAfterMove, getNextPlayer } from '../rules/gameState';
 
-export const applyMove = (
-  board: Board,
-  from: BoardPosition,
-  to: BoardPosition,
-  currentPlayer: Colors,
-  enPassantTarget: BoardPosition | null,
-  capturedPieces: CapturedPieces,
-  moveHistory: Move[],
-  promotion?: PromotionPieceType
-): MoveApplicationResult => {
-  const [fromRow, fromCol] = from;
-  const [toRow, toCol] = to;
+import { handlePromotionMove } from './promotionMove';
+import { handleRegularMove } from './regularMove';
 
-  const newBoard = board.map(row => [...row]);
-  let newEnPassantTarget: BoardPosition | null = null;
-  const newCapturedPieces = { ...capturedPieces };
-  const newMoveHistory = [...moveHistory];
+function applyPromotionMove(params: ApplyMoveParams): ApplyMoveResult {
+  const {
+    board,
+    from,
+    to,
+    capturedPieces,
+    moveHistory,
+    currentPlayer,
+    promotionPieceType,
+  } = params;
 
-  const piece = newBoard[fromRow][fromCol];
-  const targetPiece = newBoard[toRow][toCol];
-
-  if (!piece) {
-    throw new Error('No piece at from position');
+  if (!promotionPieceType) {
+    throw new Error('applyPromotionMove: promotionPieceType required');
   }
 
-  if (targetPiece) {
-    newCapturedPieces[targetPiece.color].push(targetPiece);
-  }
+  const promotionResult = handlePromotionMove(
+    board,
+    from,
+    to,
+    promotionPieceType,
+    capturedPieces
+  );
 
-  if (piece.type === FigureNames.KING && Math.abs(toCol - fromCol) === 2) {
-    const isKingside = toCol > fromCol;
-    const rookCol = isKingside ? 7 : 0;
-    const newRookCol = isKingside ? 5 : 3;
-    const rook = newBoard[fromRow][rookCol];
+  const capturedPiece = board[to[0]][to[1]];
+  const moveRecord = createMoveRecord(
+    board,
+    from,
+    to,
+    capturedPiece,
+    promotionPieceType
+  );
 
-    if (rook) {
-      newBoard[fromRow][newRookCol] = { ...rook, hasMoved: true };
-      newBoard[fromRow][rookCol] = null;
-    }
-  }
-
-  if (
-    piece.type === FigureNames.PAWN &&
-    enPassantTarget &&
-    toRow === enPassantTarget[0] &&
-    toCol === enPassantTarget[1] &&
-    fromCol !== toCol
-  ) {
-    const capturedPawnRow = fromRow;
-    const capturedPawnCol = toCol;
-    const capturedPawn = newBoard[capturedPawnRow][capturedPawnCol];
-
-    if (capturedPawn) {
-      newCapturedPieces[capturedPawn.color].push(capturedPawn);
-      newBoard[capturedPawnRow][capturedPawnCol] = null;
-    }
-  }
-
-  if (piece.type === FigureNames.PAWN && Math.abs(toRow - fromRow) === 2) {
-    newEnPassantTarget = [fromRow + (toRow - fromRow) / 2, toCol];
-  }
-
-  const promotedPiece = promotion
-    ? { type: promotion, color: piece.color }
-    : piece;
-
-  const moveRecord = createMoveRecord(board, from, to, targetPiece, promotion);
-  newMoveHistory.push(moveRecord);
-
-  newBoard[toRow][toCol] = { ...promotedPiece, hasMoved: true };
-  newBoard[fromRow][fromCol] = null;
-
-  const nextPlayer = currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
-  const newGameStatus = getGameStatusAfterMove(newBoard, currentPlayer);
+  const nextPlayer = getNextPlayer(currentPlayer);
+  const newGameStatus = getGameStatusAfterMove(
+    promotionResult.newBoard,
+    currentPlayer
+  );
 
   return {
-    newBoard,
-    newCapturedPieces,
-    newEnPassantTarget,
-    newMoveHistory,
+    newBoard: promotionResult.newBoard,
+    newCapturedPieces: promotionResult.newCapturedPieces,
+    newEnPassantTarget: null,
+    newMoveHistory: [...moveHistory, moveRecord],
     newGameStatus,
     nextPlayer,
+    promotionRequired: false,
   };
-};
+}
+
+function applyRegularMove(params: ApplyMoveParams): ApplyMoveResult {
+  const {
+    board,
+    from,
+    to,
+    enPassantTarget,
+    capturedPieces,
+    moveHistory,
+    currentPlayer,
+  } = params;
+
+  const moveResult = handleRegularMove(
+    board,
+    from,
+    to,
+    enPassantTarget,
+    capturedPieces
+  );
+
+  if (moveResult.promotionRequired) {
+    return {
+      newBoard: board,
+      newCapturedPieces: capturedPieces,
+      newEnPassantTarget: null,
+      newMoveHistory: moveHistory,
+      newGameStatus: getGameStatusAfterMove(board, currentPlayer),
+      nextPlayer: getNextPlayer(currentPlayer),
+      promotionRequired: true,
+    };
+  }
+
+  const moveRecord = createMoveRecord(
+    board,
+    from,
+    to,
+    moveResult.capturedPiece
+  );
+  const nextPlayer = getNextPlayer(currentPlayer);
+  const newGameStatus = getGameStatusAfterMove(
+    moveResult.newBoard,
+    currentPlayer
+  );
+
+  return {
+    newBoard: moveResult.newBoard,
+    newCapturedPieces: moveResult.newCapturedPieces,
+    newEnPassantTarget: moveResult.newEnPassantTarget,
+    newMoveHistory: [...moveHistory, moveRecord],
+    newGameStatus,
+    nextPlayer,
+    promotionRequired: false,
+  };
+}
+
+export function applyMove(params: ApplyMoveParams): ApplyMoveResult {
+  if (params.promotionPieceType) {
+    return applyPromotionMove(params);
+  }
+  return applyRegularMove(params);
+}
