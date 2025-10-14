@@ -1,8 +1,7 @@
 import { Colors, FigureNames, GameStatus } from '@/types/types';
 import type { Board, BoardPosition, CapturedPieces, Move } from '@/types/types';
 import { createMoveRecord } from '@/utils/notation/moveRecord';
-import { isKingInCheck } from '@/utils/rules/gameStateHelpers';
-import { isCheckmate, isStalemate } from '@/utils/rules/gameStateRules';
+import { getGameStatusAfterMove } from '@/utils/rules/gameState';
 
 interface BotMoveResult {
   newBoard: Board;
@@ -80,17 +79,8 @@ export const handleBotMove = (
   newBoard[toRow][toCol] = { ...piece, hasMoved: true };
   newBoard[fromRow][fromCol] = null;
 
-  const nextPlayer =
-    currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
-  let newGameStatus = GameStatus.IN_PROGRESS;
-
-  if (isCheckmate(newBoard, nextPlayer)) {
-    newGameStatus = GameStatus.CHECKMATE;
-  } else if (isStalemate(newBoard, nextPlayer)) {
-    newGameStatus = GameStatus.STALEMATE;
-  } else if (isKingInCheck(newBoard, nextPlayer)) {
-    newGameStatus = GameStatus.CHECK;
-  }
+  const nextPlayer = currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
+  const newGameStatus = getGameStatusAfterMove(newBoard, currentPlayer);
 
   return {
     newBoard,

@@ -1,5 +1,7 @@
-import type { Board, Colors, BoardPosition } from '@/types/types';
-import { isValidMove } from '@/utils/rules/moveValidation';
+import type { Board, BoardPosition } from '@/types/types';
+import { Colors } from '@/types/types';
+
+import { isValidMove } from '../rules/moveValidation';
 
 export const getRandomMove = (
   board: Board,
@@ -24,8 +26,8 @@ export const getRandomMove = (
                 board,
                 [fromRow, fromCol],
                 [toRow, toCol],
-                currentPlayer,
-                enPassantTarget
+                enPassantTarget,
+                currentPlayer
               )
             ) {
               possibleMoves.push({

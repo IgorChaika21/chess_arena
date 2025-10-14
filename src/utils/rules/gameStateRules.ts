@@ -14,7 +14,13 @@ export const isCheckmate = (board: Board, kingColor: Colors): boolean => {
         for (let toRow = 0; toRow < 8; toRow++) {
           for (let toCol = 0; toCol < 8; toCol++) {
             if (
-              isValidMove(board, [fromRow, fromCol], [toRow, toCol], kingColor)
+              isValidMove(
+                board,
+                [fromRow, fromCol],
+                [toRow, toCol],
+                null,
+                kingColor
+              )
             ) {
               return false;
             }
@@ -43,6 +49,7 @@ export const isStalemate = (board: Board, currentPlayer: Colors): boolean => {
                 board,
                 [fromRow, fromCol],
                 [toRow, toCol],
+                null,
                 currentPlayer
               )
             ) {

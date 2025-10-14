@@ -8,8 +8,7 @@ import type {
   PromotionPieceType,
 } from '@/types/types';
 import { createMoveRecord } from '@/utils/notation/moveRecord';
-import { isKingInCheck } from '@/utils/rules/gameStateHelpers';
-import { isCheckmate, isStalemate } from '@/utils/rules/gameStateRules';
+import { getGameStatusAfterMove } from '@/utils/rules/gameState';
 import { isValidMove } from '@/utils/rules/moveValidation';
 
 import type { UseBoardState } from './useBoardState';
@@ -80,14 +79,7 @@ export function useMoveHandler(boardState: UseBoardState) {
           currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
         setCurrentPlayer(nextPlayer);
 
-        let newGameStatus = GameStatus.IN_PROGRESS;
-        if (isCheckmate(newBoard, nextPlayer)) {
-          newGameStatus = GameStatus.CHECKMATE;
-        } else if (isStalemate(newBoard, nextPlayer)) {
-          newGameStatus = GameStatus.STALEMATE;
-        } else if (isKingInCheck(newBoard, nextPlayer)) {
-          newGameStatus = GameStatus.CHECK;
-        }
+        const newGameStatus = getGameStatusAfterMove(newBoard, currentPlayer);
         setGameStatus(newGameStatus);
       }
     },
@@ -131,8 +123,8 @@ export function useMoveHandler(boardState: UseBoardState) {
             board,
             selectedSquare,
             [r, c],
+            enPassantTarget,
             currentPlayer,
-            enPassantTarget
           )
         ) {
           moves.push([r, c]);
@@ -187,8 +179,8 @@ export function useMoveHandler(boardState: UseBoardState) {
             board,
             [sr, sc],
             clickedSquare,
+            enPassantTarget,
             currentPlayer,
-            enPassantTarget
           )
         ) {
           const newBoard = [...board.map(row => [...row])];
@@ -272,14 +264,7 @@ export function useMoveHandler(boardState: UseBoardState) {
             currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
           setCurrentPlayer(nextPlayer);
 
-          let newGameStatus = GameStatus.IN_PROGRESS;
-          if (isCheckmate(newBoard, nextPlayer)) {
-            newGameStatus = GameStatus.CHECKMATE;
-          } else if (isStalemate(newBoard, nextPlayer)) {
-            newGameStatus = GameStatus.STALEMATE;
-          } else if (isKingInCheck(newBoard, nextPlayer)) {
-            newGameStatus = GameStatus.CHECK;
-          }
+          const newGameStatus = getGameStatusAfterMove(newBoard, currentPlayer);
           setGameStatus(newGameStatus);
         } else {
           setSelectedSquare(null);
