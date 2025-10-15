@@ -22,8 +22,6 @@ interface GameState {
   resign: (player: Colors) => void;
   setCapturedPieces: (pieces: CapturedPieces) => void;
   setMoveHistory: (history: MoveHistory) => void;
-  setPlayerColor: (color: Colors) => void;
-  setGameMode: (mode: GameMode) => void;
 }
 
 export const useGameStore = create<GameState>(set => ({
@@ -42,12 +40,9 @@ export const useGameStore = create<GameState>(set => ({
   setCapturedPieces: (pieces: CapturedPieces) =>
     set({ capturedPieces: pieces }),
   setMoveHistory: (history: MoveHistory) => set({ moveHistory: history }),
-  setPlayerColor: (color: Colors) => set({ playerColor: color }),
-  setGameMode: (mode: GameMode) => set({ gameMode: mode }),
-
   toggleTheme: () => set(state => ({ darkMode: !state.darkMode })),
 
-  resetGame: () =>
+  resetGame: () => {
     set({
       currentPlayer: Colors.WHITE,
       gameStatus: GameStatus.IN_PROGRESS,
@@ -55,10 +50,8 @@ export const useGameStore = create<GameState>(set => ({
       resignedPlayer: null,
       capturedPieces: { white: [], black: [] },
       moveHistory: [],
-      playerColor: Colors.WHITE,
-      gameMode: GameMode.PVP,
-    }),
-
+    });
+  },
   startGame: (mode, color = Colors.WHITE) => {
     set({
       gameMode: mode,

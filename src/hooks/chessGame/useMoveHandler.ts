@@ -1,14 +1,14 @@
 import { useMemo, useCallback } from 'react';
 
 import { useGameStore } from '@/store/useGameStore';
-import { Colors, FigureNames, GameStatus, GameMode } from '@/types/types';
+import { GameMode } from '@/types/types';
 import type {
+  PromotionPieceType,
+  ApplyMoveResult,
   ChessPiece,
   BoardPosition,
-  PromotionPieceType,
 } from '@/types/types';
-import { createMoveRecord } from '@/utils/notation/moveRecord';
-import { getGameStatusAfterMove } from '@/utils/rules/gameState';
+import { applyMove } from '@/utils/moves/applyMove';
 import { isValidMove } from '@/utils/rules/moveValidation';
 
 import type { UseBoardState } from './useBoardState';
@@ -28,74 +28,23 @@ export function useMoveHandler(boardState: UseBoardState) {
   const {
     currentPlayer,
     setCurrentPlayer,
-    gameStatus,
     setGameStatus,
-    gameStarted,
     capturedPieces,
     setCapturedPieces,
     moveHistory,
     setMoveHistory,
-    playerColor,
     gameMode,
+    playerColor,
+    gameStarted,
   } = useGameStore();
 
-  const handlePromotion = useCallback(
-    (pieceType: PromotionPieceType) => {
-      if (!promotionMove) return;
-
-      const { from, to } = promotionMove;
-      const [fromRow, fromCol] = from;
-      const [toRow, toCol] = to;
-
-      const newBoard = board.map(row => [...row]);
-      const piece = newBoard[fromRow][fromCol];
-      const newMoveHistory = [...moveHistory];
-
-      const capturedPiece = board[toRow][toCol];
-
-      if (piece && piece.type === FigureNames.PAWN) {
-        const moveRecord = createMoveRecord(
-          board,
-          from,
-          to,
-          capturedPiece,
-          pieceType
-        );
-        newMoveHistory.push(moveRecord);
-
-        newBoard[toRow][toCol] = {
-          color: piece.color,
-          type: pieceType,
-          hasMoved: true,
-        };
-        newBoard[fromRow][fromCol] = null;
-
-        setBoard(newBoard);
-        setMoveHistory(newMoveHistory);
-        setPromotionMove(null);
-        setSelectedSquare(null);
-
-        const nextPlayer =
-          currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
-        setCurrentPlayer(nextPlayer);
-
-        const newGameStatus = getGameStatusAfterMove(newBoard, currentPlayer);
-        setGameStatus(newGameStatus);
-      }
-    },
-    [
-      promotionMove,
-      board,
-      currentPlayer,
-      moveHistory,
-      setBoard,
-      setMoveHistory,
-      setPromotionMove,
-      setSelectedSquare,
-      setCurrentPlayer,
-      setGameStatus,
-    ]
-  );
+  const canInteractWithBoard = useCallback((): boolean => {
+    return (
+      gameStarted &&
+      !promotionMove &&
+      !(gameMode === GameMode.PVB && currentPlayer !== playerColor)
+    );
+  }, [gameStarted, promotionMove, gameMode, currentPlayer, playerColor]);
 
   const canSelectPiece = useCallback(
     (piece: ChessPiece | null): boolean => {
@@ -111,8 +60,75 @@ export function useMoveHandler(boardState: UseBoardState) {
     []
   );
 
+  const updateState = useCallback(
+    (result: ApplyMoveResult) => {
+      const {
+        newBoard,
+        newCapturedPieces,
+        newEnPassantTarget,
+        newMoveHistory,
+        newGameStatus,
+        nextPlayer,
+      } = result;
+
+      setBoard(newBoard);
+      setCapturedPieces(newCapturedPieces);
+      setMoveHistory(newMoveHistory);
+      setEnPassantTarget(newEnPassantTarget);
+      setGameStatus(newGameStatus);
+      setCurrentPlayer(nextPlayer);
+      setPromotionMove(null);
+      setSelectedSquare(null);
+    },
+    [
+      setBoard,
+      setCapturedPieces,
+      setMoveHistory,
+      setEnPassantTarget,
+      setGameStatus,
+      setCurrentPlayer,
+      setPromotionMove,
+      setSelectedSquare,
+    ]
+  );
+
+  const moveDependencies = useMemo(
+    () => ({
+      board,
+      enPassantTarget,
+      currentPlayer,
+      capturedPieces,
+      moveHistory,
+    }),
+    [board, enPassantTarget, currentPlayer, capturedPieces, moveHistory]
+  );
+
+  const stateSetters = useMemo(
+    () => ({
+      setSelectedSquare,
+      setPromotionMove,
+      updateState,
+    }),
+    [setSelectedSquare, setPromotionMove, updateState]
+  );
+
+  const validators = useMemo(
+    () => ({
+      canInteractWithBoard,
+      isSameSquare,
+      canSelectPiece,
+    }),
+    [canInteractWithBoard, isSameSquare, canSelectPiece]
+  );
+
   const possibleMoves = useMemo<BoardPosition[]>(() => {
-    if (!selectedSquare) return [];
+    if (!gameStarted || !selectedSquare) return [];
+
+    const { board, enPassantTarget, currentPlayer } = moveDependencies;
+
+    const [sr, sc] = selectedSquare;
+    const piece = board[sr][sc];
+    if (!piece || piece.color !== currentPlayer) return [];
 
     const moves: BoardPosition[] = [];
 
@@ -133,24 +149,50 @@ export function useMoveHandler(boardState: UseBoardState) {
     }
 
     return moves;
-  }, [selectedSquare, board, enPassantTarget, currentPlayer]);
+  }, [gameStarted, selectedSquare, moveDependencies]);
+
+  const handlePromotion = useCallback(
+    (pieceType: PromotionPieceType) => {
+      if (!promotionMove) return;
+
+      const { from, to } = promotionMove;
+      const {
+        board,
+        enPassantTarget,
+        currentPlayer,
+        capturedPieces,
+        moveHistory,
+      } = moveDependencies;
+
+      const result = applyMove({
+        board,
+        from,
+        to,
+        currentPlayer,
+        enPassantTarget,
+        capturedPieces,
+        moveHistory,
+        promotionPieceType: pieceType,
+      });
+
+      stateSetters.updateState(result);
+    },
+    [promotionMove, moveDependencies, stateSetters]
+  );
 
   const handleSquareClick = useCallback(
     (row: number, col: number) => {
-      if (gameMode === GameMode.PVB && currentPlayer !== playerColor) {
-        return;
-      }
+      const {
+        board,
+        enPassantTarget,
+        currentPlayer,
+        capturedPieces,
+        moveHistory,
+      } = moveDependencies;
+      const { setSelectedSquare, setPromotionMove, updateState } = stateSetters;
+      const { canInteractWithBoard, isSameSquare, canSelectPiece } = validators;
 
-      if (!gameStarted || promotionMove) {
-        return;
-      }
-
-      if (
-        gameStatus === GameStatus.CHECKMATE ||
-        gameStatus === GameStatus.STALEMATE
-      ) {
-        return;
-      }
+      if (!canInteractWithBoard()) return;
 
       const clickedSquare: BoardPosition = [row, col];
       const piece = board[row][col];
@@ -183,117 +225,33 @@ export function useMoveHandler(boardState: UseBoardState) {
             currentPlayer
           )
         ) {
-          const newBoard = [...board.map(row => [...row])];
-          let newEnPassantTarget: BoardPosition | null = null;
-          const newCapturedPieces = { ...capturedPieces };
-          const newMoveHistory = [...moveHistory];
+          try {
+            const result = applyMove({
+              board,
+              from: selectedSquare,
+              to: clickedSquare,
+              currentPlayer,
+              enPassantTarget,
+              capturedPieces,
+              moveHistory,
+            });
 
-          const targetPiece = newBoard[row][col];
-          if (targetPiece) {
-            newCapturedPieces[targetPiece.color].push(targetPiece);
-          }
-
-          if (
-            selectedPiece.type === FigureNames.PAWN &&
-            ((selectedPiece.color === Colors.WHITE && row === 0) ||
-              (selectedPiece.color === Colors.BLACK && row === 7))
-          ) {
-            setPromotionMove({ from: [sr, sc], to: [row, col] });
-            setCapturedPieces(newCapturedPieces);
-            return;
-          }
-
-          if (
-            selectedPiece.type === FigureNames.KING &&
-            Math.abs(col - sc) === 2
-          ) {
-            const isKingside = col > sc;
-            const rookCol = isKingside ? 7 : 0;
-            const newRookCol = isKingside ? 5 : 3;
-            const rook = newBoard[sr][rookCol];
-
-            if (rook) {
-              newBoard[sr][newRookCol] = { ...rook, hasMoved: true };
-              newBoard[sr][rookCol] = null;
+            if (result.promotionRequired) {
+              setPromotionMove({ from: [sr, sc], to: clickedSquare });
+              return;
             }
+
+            updateState(result);
+          } catch (err) {
+            console.error('Move error:', err);
+            setSelectedSquare(null);
           }
-
-          if (
-            selectedPiece.type === FigureNames.PAWN &&
-            enPassantTarget &&
-            row === enPassantTarget[0] &&
-            col === enPassantTarget[1] &&
-            sc !== col
-          ) {
-            const capturedPawnRow = sr;
-            const capturedPawnCol = col;
-            const capturedPawn = newBoard[capturedPawnRow][capturedPawnCol];
-            if (capturedPawn) {
-              newCapturedPieces[capturedPawn.color].push(capturedPawn);
-              newBoard[capturedPawnRow][capturedPawnCol] = null;
-            }
-          }
-
-          if (
-            selectedPiece.type === FigureNames.PAWN &&
-            Math.abs(row - sr) === 2
-          ) {
-            newEnPassantTarget = [sr + (row - sr) / 2, col];
-          } else {
-            newEnPassantTarget = null;
-          }
-
-          const moveRecord = createMoveRecord(
-            board,
-            [sr, sc],
-            [row, col],
-            targetPiece
-          );
-          newMoveHistory.push(moveRecord);
-
-          newBoard[row][col] = { ...selectedPiece, hasMoved: true };
-          newBoard[sr][sc] = null;
-
-          setBoard(newBoard);
-          setCapturedPieces(newCapturedPieces);
-          setMoveHistory(newMoveHistory);
-          setSelectedSquare(null);
-          setEnPassantTarget(newEnPassantTarget);
-
-          const nextPlayer =
-            currentPlayer === Colors.WHITE ? Colors.BLACK : Colors.WHITE;
-          setCurrentPlayer(nextPlayer);
-
-          const newGameStatus = getGameStatusAfterMove(newBoard, currentPlayer);
-          setGameStatus(newGameStatus);
         } else {
           setSelectedSquare(null);
         }
       }
     },
-    [
-      board,
-      selectedSquare,
-      enPassantTarget,
-      currentPlayer,
-      gameStatus,
-      gameStarted,
-      promotionMove,
-      capturedPieces,
-      moveHistory,
-      isSameSquare,
-      canSelectPiece,
-      gameMode,
-      playerColor,
-      setBoard,
-      setSelectedSquare,
-      setEnPassantTarget,
-      setCurrentPlayer,
-      setGameStatus,
-      setPromotionMove,
-      setCapturedPieces,
-      setMoveHistory,
-    ]
+    [moveDependencies, stateSetters, validators, selectedSquare]
   );
 
   return {
@@ -302,5 +260,3 @@ export function useMoveHandler(boardState: UseBoardState) {
     possibleMoves,
   };
 }
-
-export type UseMoveHandler = ReturnType<typeof useMoveHandler>;

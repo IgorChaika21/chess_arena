@@ -1,109 +1,137 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { makeBotMove } from '@/engine/botAI';
 import { StockfishService } from '@/engine/stockfishService';
-import { useGameStore } from '@/store/useGameStore';
-import { Colors, GameStatus, GameMode } from '@/types/types';
-import type { BoardPosition } from '@/types/types';
-import { applyMove } from '@/utils/moves/applyMove';
+import { useGameStore, useEffectiveGameStatus } from '@/store/useGameStore';
+import { Colors, GameMode, GameStatus } from '@/types/types';
+import type { Board, CapturedPieces, Move, BoardPosition } from '@/types/types';
+import { getRandomMove } from '@/utils/bot/randomBotMove';
+import { handleBotMove } from '@/utils/moves/botMove';
 
 import type { UseBoardState } from './useBoardState';
 
-interface UseBotPlayerProps {
-  boardState: UseBoardState;
+interface MoveParams {
+  board: Board;
+  currentPlayer: Colors;
+  enPassantTarget: BoardPosition | null;
+  capturedPieces: CapturedPieces;
+  moveHistory: Move[];
 }
 
-export function useBotPlayer({ boardState }: UseBotPlayerProps) {
+export function useBotPlayer(boardState: UseBoardState) {
   const {
     board,
-    enPassantTarget,
     setBoard,
-    setEnPassantTarget,
     setSelectedSquare,
+    enPassantTarget,
+    setEnPassantTarget,
+    promotionMove,
   } = boardState;
 
   const {
     currentPlayer,
-    gameStarted,
-    gameStatus,
-    moveHistory,
-    capturedPieces,
-    playerColor,
-    gameMode,
     setCurrentPlayer,
     setGameStatus,
-    setMoveHistory,
+    capturedPieces,
     setCapturedPieces,
+    moveHistory,
+    setMoveHistory,
+    gameStarted,
+    gameMode,
+    playerColor,
   } = useGameStore();
 
+  const gameStatus = useEffectiveGameStatus();
   const stockfishRef = useRef<StockfishService | null>(null);
-  const lastMoveCountRef = useRef(0);
-  const hasBotMadeFirstMoveRef = useRef(false);
+
+  const shouldMakeBotMove = useMemo(() => {
+    return (
+      gameStarted &&
+      gameMode === GameMode.PVB &&
+      currentPlayer !== playerColor &&
+      !promotionMove &&
+      (gameStatus === GameStatus.IN_PROGRESS || gameStatus === GameStatus.CHECK)
+    );
+  }, [
+    gameStarted,
+    gameMode,
+    currentPlayer,
+    playerColor,
+    promotionMove,
+    gameStatus,
+  ]);
 
   const applyBotMove = useCallback(
-    (from: BoardPosition, to: BoardPosition) => {
+    (moveParams: MoveParams, from: BoardPosition, to: BoardPosition) => {
       try {
-        const result = applyMove({
+        const {
+          board,
+          currentPlayer,
+          enPassantTarget,
+          capturedPieces,
+          moveHistory,
+        } = moveParams;
+
+        const {
+          newBoard,
+          newCapturedPieces,
+          newEnPassantTarget,
+          newMoveHistory,
+          newGameStatus,
+          nextPlayer,
+        } = handleBotMove(
           board,
           from,
           to,
           currentPlayer,
           enPassantTarget,
           capturedPieces,
-          moveHistory,
-        });
+          moveHistory
+        );
 
-        setBoard(result.newBoard);
-        setCapturedPieces(result.newCapturedPieces);
-        setEnPassantTarget(result.newEnPassantTarget);
-        setMoveHistory(result.newMoveHistory);
-        setGameStatus(result.newGameStatus);
-        setCurrentPlayer(result.nextPlayer);
+        setBoard(newBoard);
+        setCapturedPieces(newCapturedPieces);
+        setEnPassantTarget(newEnPassantTarget);
+        setMoveHistory(newMoveHistory);
+        setGameStatus(newGameStatus);
+        setCurrentPlayer(nextPlayer);
         setSelectedSquare(null);
-
-        console.log('🤖 Bot move applied successfully');
       } catch (error) {
-        console.error('🤖 Failed to apply bot move:', error);
+        console.error('Bot move application error:', error);
       }
     },
     [
+      setBoard,
+      setCapturedPieces,
+      setCurrentPlayer,
+      setEnPassantTarget,
+      setGameStatus,
+      setMoveHistory,
+      setSelectedSquare,
+    ]
+  );
+
+  const handleBotMoveInComponent = useCallback(
+    (from: BoardPosition, to: BoardPosition) => {
+      const moveParams: MoveParams = {
+        board,
+        currentPlayer,
+        enPassantTarget,
+        capturedPieces,
+        moveHistory,
+      };
+
+      applyBotMove(moveParams, from, to);
+    },
+    [
+      applyBotMove,
       board,
       currentPlayer,
       enPassantTarget,
       capturedPieces,
       moveHistory,
-      setBoard,
-      setCapturedPieces,
-      setEnPassantTarget,
-      setMoveHistory,
-      setGameStatus,
-      setCurrentPlayer,
-      setSelectedSquare,
     ]
   );
-
-  const makeAndApplyBotMove = useCallback(async () => {
-    if (!stockfishRef.current) return;
-
-    console.log('🤖 Bot starting move calculation...');
-    try {
-      const botMove = await makeBotMove(
-        board,
-        currentPlayer,
-        stockfishRef.current
-      );
-
-      if (botMove) {
-        console.log('🤖 Bot move found, applying:', botMove);
-        applyBotMove(botMove.from, botMove.to);
-        hasBotMadeFirstMoveRef.current = true;
-      } else {
-        console.log('🤖 No valid bot move found');
-      }
-    } catch (error) {
-      console.error('🤖 Bot move failed:', error);
-    }
-  }, [board, currentPlayer, applyBotMove]);
 
   useEffect(() => {
     stockfishRef.current = new StockfishService();
@@ -115,46 +143,35 @@ export function useBotPlayer({ boardState }: UseBotPlayerProps) {
   }, []);
 
   useEffect(() => {
-    const isBotTurn =
-      gameStarted &&
-      gameMode === GameMode.PVB &&
-      currentPlayer !== playerColor &&
-      (gameStatus === GameStatus.IN_PROGRESS ||
-        gameStatus === GameStatus.CHECK);
+    if (shouldMakeBotMove) {
+      const timer = setTimeout(async () => {
+        try {
+          const botMove = await makeBotMove(
+            board,
+            currentPlayer,
+            stockfishRef.current
+          );
+          if (botMove) {
+            handleBotMoveInComponent(botMove.from, botMove.to);
+            return;
+          }
+        } catch (err) {
+          console.error('Bot move error:', err);
+        }
 
-    const shouldBotStartFirst =
-      gameStarted &&
-      gameMode === GameMode.PVB &&
-      playerColor === Colors.BLACK &&
-      !hasBotMadeFirstMoveRef.current &&
-      moveHistory.length === 0;
-
-    if (isBotTurn || shouldBotStartFirst) {
-      console.log('🤖 New bot turn detected, triggering move...');
-      lastMoveCountRef.current = moveHistory.length;
-
-      const timer = setTimeout(() => {
-        makeAndApplyBotMove();
+        const randomMove = getRandomMove(board, currentPlayer, enPassantTarget);
+        if (randomMove) {
+          handleBotMoveInComponent(randomMove.from, randomMove.to);
+        }
       }, 500);
 
       return () => clearTimeout(timer);
     }
-
-    if (!gameStarted) {
-      hasBotMadeFirstMoveRef.current = false;
-      lastMoveCountRef.current = 0;
-    }
   }, [
-    gameStarted,
-    gameMode,
+    shouldMakeBotMove,
+    board,
     currentPlayer,
-    playerColor,
-    gameStatus,
-    moveHistory.length,
-    makeAndApplyBotMove,
+    enPassantTarget,
+    handleBotMoveInComponent,
   ]);
-
-  return {
-    stockfishRef,
-  };
 }

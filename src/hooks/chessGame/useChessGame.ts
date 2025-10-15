@@ -11,9 +11,7 @@ export default function useChessGame() {
   const moveHandler = useMoveHandler(boardState);
   const { gameStarted } = useGameStore();
 
-  useBotPlayer({
-    boardState: boardState,
-  });
+  useBotPlayer(boardState);
 
   useEffect(() => {
     if (!gameStarted) {

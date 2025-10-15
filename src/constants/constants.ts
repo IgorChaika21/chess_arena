@@ -13,32 +13,40 @@ export const gameStatusText: Record<GameStatus, string> = {
 
 export const INITIAL_BOARD: Board = [
   [
-    { color: Colors.BLACK, type: FigureNames.ROOK },
+    { color: Colors.BLACK, type: FigureNames.ROOK, hasMoved: false },
     { color: Colors.BLACK, type: FigureNames.KNIGHT },
     { color: Colors.BLACK, type: FigureNames.BISHOP },
     { color: Colors.BLACK, type: FigureNames.QUEEN },
-    { color: Colors.BLACK, type: FigureNames.KING },
+    { color: Colors.BLACK, type: FigureNames.KING, hasMoved: false },
     { color: Colors.BLACK, type: FigureNames.BISHOP },
     { color: Colors.BLACK, type: FigureNames.KNIGHT },
-    { color: Colors.BLACK, type: FigureNames.ROOK },
+    { color: Colors.BLACK, type: FigureNames.ROOK, hasMoved: false },
   ],
   Array(8)
     .fill(null)
-    .map(() => ({ color: Colors.BLACK, type: FigureNames.PAWN })),
+    .map(() => ({
+      color: Colors.BLACK,
+      type: FigureNames.PAWN,
+      hasMoved: false,
+    })),
   ...Array(4)
     .fill(null)
     .map(() => Array(8).fill(null)),
   Array(8)
     .fill(null)
-    .map(() => ({ color: Colors.WHITE, type: FigureNames.PAWN })),
+    .map(() => ({
+      color: Colors.WHITE,
+      type: FigureNames.PAWN,
+      hasMoved: false,
+    })),
   [
-    { color: Colors.WHITE, type: FigureNames.ROOK },
+    { color: Colors.WHITE, type: FigureNames.ROOK, hasMoved: false },
     { color: Colors.WHITE, type: FigureNames.KNIGHT },
     { color: Colors.WHITE, type: FigureNames.BISHOP },
     { color: Colors.WHITE, type: FigureNames.QUEEN },
-    { color: Colors.WHITE, type: FigureNames.KING },
+    { color: Colors.WHITE, type: FigureNames.KING, hasMoved: false },
     { color: Colors.WHITE, type: FigureNames.BISHOP },
     { color: Colors.WHITE, type: FigureNames.KNIGHT },
-    { color: Colors.WHITE, type: FigureNames.ROOK },
+    { color: Colors.WHITE, type: FigureNames.ROOK, hasMoved: false },
   ],
 ];
