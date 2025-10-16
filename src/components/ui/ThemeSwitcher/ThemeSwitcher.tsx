@@ -2,7 +2,11 @@ import React from 'react';
 
 import { useTheme } from '@/hooks/theme/useTheme';
 
-import { ThemeToggleButton, IconWrapper } from './ThemeSwitcher.styles';
+import {
+  ThemeToggleButton,
+  IconWrapper,
+  TextWrapper,
+} from './ThemeSwitcher.styles';
 
 const ThemeSwitcher: React.FC = () => {
   const { darkMode, toggleTheme } = useTheme();
@@ -14,7 +18,7 @@ const ThemeSwitcher: React.FC = () => {
       title={darkMode ? 'Light mode' : 'Dark mode'}
     >
       <IconWrapper>{darkMode ? '☀️' : '🌙'}</IconWrapper>
-      <span>{darkMode ? 'Light' : 'Dark'}</span>
+      <TextWrapper>{darkMode ? 'Light' : 'Dark'}</TextWrapper>
     </ThemeToggleButton>
   );
 };

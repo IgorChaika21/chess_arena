@@ -42,11 +42,14 @@ export const ColumnLabels = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-around;
-  align-items: end;
+  align-items: center;
   padding-left: 20px;
+  height: 20px;
+  flex-shrink: 0;
 
   ${media.sm} {
     padding-left: 12px;
+    height: 12px;
   }
 `;
 
@@ -57,12 +60,13 @@ export const RowLabels = styled.div`
   justify-content: space-around;
   align-items: center;
   border-bottom: 2px solid #333;
-  padding: 5px;
+  padding: 5px 0;
   width: 20px;
   flex-shrink: 0;
 
   ${media.sm} {
     width: 12px;
+    padding: 3px 0;
   }
 `;
 
@@ -84,17 +88,16 @@ export const NotationLabel = styled.div`
 `;
 
 export const NotationColumnLabel = styled(NotationLabel)`
-  width: 8vmin;
-  max-width: 90px;
-  max-height: 90px;
-  height: auto;
+  width: auto;
+  height: 100%;
+  max-width: none;
+  max-height: none;
 
   ${media.xl} {
-    width: 7vmin;
+    width: auto;
   }
 
   ${media.lg} {
-    width: 10vmin;
-    max-width: none;
+    width: auto;
   }
 `;

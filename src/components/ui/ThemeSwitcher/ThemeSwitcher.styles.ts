@@ -47,10 +47,6 @@ export const ThemeToggleButton = styled.button`
     height: 50px;
     padding: 0;
     justify-content: center;
-
-    span {
-      display: none;
-    }
   }
 `;
 
@@ -59,5 +55,11 @@ export const IconWrapper = styled.span`
 
   ${media.sm} {
     font-size: 20px;
+  }
+`;
+
+export const TextWrapper = styled.span`
+  ${media.sm} {
+    display: none;
   }
 `;

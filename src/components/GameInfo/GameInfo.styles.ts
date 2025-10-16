@@ -1,77 +1,41 @@
 import styled from 'styled-components';
 
+import { media } from '@/styles/breakpoints';
+
 export const GameInfoContainer = styled.div`
-  background-color: ${props => props.theme.bgColor};
+  background-color: ${props => props.theme.rightBgColor};
   border-radius: 12px;
-  padding: 0;
-  border: 1px solid ${props => props.theme.borderColor};
-  min-width: auto;
+  padding: 24px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   gap: 20px;
+
+  ${media.sm} {
+    padding: 16px;
+    gap: 16px;
+  }
 `;
 
-export const Section = styled.div`
-  background-color: ${props => props.theme.sectionBg};
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid ${props => props.theme.borderColor};
-  margin-bottom: 0;
-`;
-
-export const SectionTitle = styled.h3`
-  margin-bottom: 16px;
+export const GameTitle = styled.h2`
+  text-align: center;
+  margin: 0;
   color: ${props => props.theme.textColor};
-  font-size: 1.2rem;
-`;
+  font-size: 1.8rem;
+  font-weight: 700;
+  padding-bottom: 16px;
+  border-bottom: 2px solid ${props => props.theme.borderColor};
+  flex-shrink: 0;
 
-export const StatusText = styled.p<{
-  $variant?: 'check' | 'checkmate' | 'stalemate';
-}>`
-  color: ${props => {
-    switch (props.$variant) {
-      case 'check':
-        return '#ff9800';
-      case 'checkmate':
-        return '#f44336';
-      case 'stalemate':
-        return '#9e9e9e';
-      default:
-        return props.theme.textColor;
-    }
-  }};
-  font-weight: ${props => (props.$variant ? 'bold' : 'normal')};
-  margin: 8px 0;
-  font-size: 1rem;
-`;
-
-export const Button = styled.button`
-  background-color: ${props => props.theme.borderColor};
-  color: ${props => props.theme.textColor};
-  border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: ${props => props.theme.textColor};
-    color: ${props => props.theme.bgColor};
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
+  ${media.sm} {
+    font-size: 1.5rem;
+    padding-bottom: 12px;
   }
 `;
 
-export const ButtonGroup = styled.div`
-  display: flex;
-  gap: 12px;
-
-  @media (max-width: 400px) {
-    flex-direction: column;
-  }
+export const GameTitleIcon = styled.img`
+  width: 32px;
+  height: 32px;
+  margin-right: 12px;
+  vertical-align: middle;
 `;
