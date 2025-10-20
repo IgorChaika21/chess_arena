@@ -1,13 +1,14 @@
 {
   "name": "chess-arena",
-  "private": true,
-  "version": "0.1.0",
-  "description": "Modern chess application",
+  "version": "1.0.0",
+  "description": "Modern chess application with AI opponent and player vs player modes",
   "keywords": [
     "chess",
     "react",
     "typescript",
-    "game"
+    "game",
+    "ai",
+    "stockfish"
   ],
   "author": "Igor Chaika",
   "license": "MIT",
@@ -17,11 +18,22 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,json,md,css}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "stockfish.js": "^10.0.2",
     "styled-components": "^6.1.19",
     "zustand": "^5.0.8"
   },
@@ -29,13 +41,17 @@
     "@eslint/js": "^9.36.0",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
+    "@types/styled-components": "^5.1.34",
     "@vitejs/plugin-react": "^5.0.3",
     "eslint": "^9.36.0",
     "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.3",
     "prettier": "^3.6.2",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.44.0",
